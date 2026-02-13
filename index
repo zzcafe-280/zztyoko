@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>カスタムお菓子メーカー（チョコ風UI）</title>
+<style>
+  :root{
+    --choco-1:#4b2e2a;
+    --choco-2:#6f443f;
+    --choco-3:#8b5a51;
+    --cream:#f6e9d7;
+    --accent:#d39b7d;
+  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;background: linear-gradient(180deg,#2b1b18 0%, #1f1411 100%);color:var(--cream);}
+  .app{
+    max-width:1100px;margin:28px auto;padding:20px;border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+    box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    display:flex;gap:20px;
+  }
+
+  /* Left: preview */
+  .preview {
+    width:640px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    align-items:center;
+  }
+  .canvas-wrap{
+    width:600px;
+    height:600px;
+    background:linear-gradient(180deg,#2a1b17 0%, #1a0f0d 100%);
+    border-radius:14px;
+    padding:12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6), inset 0 3px 0 rgba(255,255,255,0.03);
+    display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  canvas#composite{
+    width:576px;height:576px;background:#fff;border-radius:8px;display:block;
+    image-rendering: crisp-edges;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  }
+  /* Controls under preview */
+  .controls{
+    width:100%;
+    display:flex;gap:8px;align-items:center;justify-content:space-between;
+  }
+  .btn{
+    background:linear-gradient(180deg,var(--choco-2),var(--choco-1));
+    color:var(--cream);
+    border:none;padding:10px 14px;border-radius:10px;cursor:pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    font-weight:600;
+  }
+  .btn.secondary{
+    background: linear-gradient(180deg,var(--cream),#f0e7db);
+    color:var(--choco-1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+
+  /* Right: layers list */
+  .layers{
+    flex:1;min-width:320px;max-width:420px;padding:8px;overflow:auto;
+  }
+  .layers h2{margin:6px 0 12px 10px;color:var(--cream);}
+  .layer{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+    margin:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+  }
+  .layer-header{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  }
+  .layer-title{font-weight:700;color:var(--cream)}
+  .toggle-btn{
+    background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--cream);cursor:pointer;
+  }
+  .options{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;}
+  .opt{
+    width:64px;height:64px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;
+    border:2px solid rgba(0,0,0,0.3);cursor:pointer;position:relative;
+  }
+  .opt img{max-width:100%;max-height:100%;object-fit:cover;display:block;}
+  .opt .label {
+    position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.38);color:white;font-size:11px;padding:2px;border-radius:4px;text-align:center;
+  }
+  .swatch{
+    width:48px;height:48px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
+  }
+  .opt.selected{outline:3px solid var(--accent);box-shadow: 0 4px 12px rgba(211,155,125,0.18);}
+
+  /* Text/draw tool */
+  .toolbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;}
+  .size-indicator{width:36px;height:36px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+
+  /* small note */
+  .note{position:fixed;right:14px;bottom:10px;font-size:12px;color:rgba(255,255,255,0.55);opacity:0.9}
+
+  /* chocolate style buttons hover audio hint */
+  .btn:hover{transform:translateY(-2px);}
+
+  /* Responsive */
+  @media (max-width:1100px){
+    .app{flex-direction:column;align-items:center;}
+    .preview{width:100%}
+    .layers{width:100%}
+  }
+
+</style>
+</head>
+<body>
+<div class="app" role="application" aria-label="カスタムお菓子メーカー">
+  <div class="preview" aria-hidden="false">
+    <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between">
+      <h1 style="margin:0;color:var(--cream);font-size:18px">カスタムお菓子メーカー</h1>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn" id="randomizeBtn" title="ランダム">ランダム</button>
+        <button class="btn secondary" id="resetBtn" title="リセット">リセット</button>
+        <button class="btn" id="saveBtn" title="画像を保存">保存 (PNG)</button>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <!-- Visible composite canvas -->
+      <canvas id="composite" width="576" height="576" aria-label="プレビュー"></canvas>
+
+      <!-- drawing canvas (topmost) - same size but absolute overlay (we keep it in JS as offscreen + visible) -->
+      <!-- We'll use an overlay element for pointer cursor and events: -->
+      <canvas id="drawLayer" width="576" height="576" style="position:absolute;left:calc(50% - 288px);top:calc(50% - 288px);width:576px;height:576px;border-radius:8px;pointer-events:auto;"></canvas>
+    </div>
+
+    <div class="controls">
+      <div class="toolbox">
+        <button class="btn" id="writeModeBtn">文字/手書きモード</button>
+        <button class="btn" id="eraseModeBtn">消しゴム</button>
+        <label style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:13px;color:var(--cream)">太さ</span>
+          <input id="sizeRange" type="range" min="2" max="80" value="18">
+        </label>
+        <div class="size-indicator" id="sizePreview"></div>
+        <button class="btn secondary" id="clearDrawBtn">描画をクリア</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label style="font-size:13px;color:var(--cream);">背景: <input id="showGrid" type="checkbox" checked></label>
+      </div>
+    </div>
+  </div>
+
+  <aside class="layers" aria-label="レイヤー一覧">
+    <h2>レイヤー</h2>
+    <div id="layersContainer"></div>
+  </aside>
+</div>
+
+<div class="note">注意: 画像はPNGでダウンロードされます。ボタン操作時に音が鳴ります。</div>
+
+<!-- audio elements -->
+<audio id="hoverAudio" preload="auto" src="ppp.mp3"></audio>
+<audio id="clickAudio" preload="auto" src="pp.mp3"></audio>
+
+<script>
+/*
+  シングルファイルで完結するカスタムお菓子メーカーの実装
+  - 各レイヤーは同サイズの画像群から選べる
+  - 初期はランダムで1つずつ選択
+  - レイヤーを切り替えるUI（1つだけ展開）
+  - 描画（文字や手書き）用のトップレイヤー（黒、太さ可変）
+  - 消しゴムは描画レイヤー上の描いた線のみ消す（下の画像は消さない）
+  - 保存ボタンで合成してPNGをダウンロード
+  - UIはチョコレート風の色合い
+  - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生（ファイルはルートに置いてください）
+*/
+
+/* ---------------------------
+   ここでレイヤー定義（コード内でだけ設定）
+   layers 配列の各要素:
+     id: 数値（小さいほど下になる）
+     title: 表示名
+     editable: true/false（falseなら切り替えUIを表示しない）
+     options: [ { label: "文字または色(#xxxx)", url: "https://..." }, ... ]
+   注意: 画像はすべて同じ縦横比・サイズである前提（例: 576x576）
+---------------------------- */
+const layers = [
+  // 背景レイヤー（最下層）
+  { id: 0, title: "背景", editable: true, options: [
+      { label:"#F7E4D9", url:"https://raw.githubusercontent.com/zzcafe-2800/zzke-ki/5b5abf2ece66acf30dc049f9a6db8bc61d0f9fb4/p.png" },
+      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/1001.png" },
+      { label:"#FFFFFF", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/1002.png" }
+    ]},
+  // 袋画像
+  { id: 1, title: "袋", editable: true, options: [
+      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/2001.png" },
+      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/2002.png" },
+      { label:"#8B5A51", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/2003.png" }
+    ]},
+  // ロゴ等
+  { id: 2, title: "ロゴ", editable: true, options: [
+      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/3001.png" },
+      { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/3002.png" }
+    ]},
+  // エフェクト
+  { id: 3, title: "エフェクト", editable: true, options: [
+      { label:"なし", url:"" },
+      { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-2800/zztyoko/main/4001.png" }
+    ]},
+  // 最上位（描画は専用レイヤーとして扱いますが、見た目上のレイヤー情報を持たせる）
+  { id: 4, title: "手書き（上）", editable: false, options: [] }
+];
+
+/* ---------------------------
+   内部状態
+---------------------------- */
+const state = {
+  selected: {}, // layerId -> optionIndex
+  imagesCache: {}, // url -> HTMLImageElement
+  expandOpen: null, // 展開されているレイヤーID（1つだけ）
+  canvasSize: 576
+};
+
+/* Elements */
+const layersContainer = document.getElementById('layersContainer');
+const composite = document.getElementById('composite');
+const drawLayer = document.getElementById('drawLayer');
+const ctx = composite.getContext('2d',{alpha:true});
+const drawCtx = drawLayer.getContext('2d',{alpha:true});
+const hoverAudio = document.getElementById('hoverAudio');
+const clickAudio = document.getElementById('clickAudio');
+const sizeRange = document.getElementById('sizeRange');
+const sizePreview = document.getElementById('sizePreview');
+const writeModeBtn = document.getElementById('writeModeBtn');
+const eraseModeBtn = document.getElementById('eraseModeBtn');
+const clearDrawBtn = document.getElementById('clearDrawBtn');
+const randomizeBtn = document.getElementById('randomizeBtn');
+const resetBtn = document.getElementById('resetBtn');
+const saveBtn = document.getElementById('saveBtn');
+
+/* Play sounds on all buttons: hover -> ppp.mp3, click -> pp.mp3 */
+function attachButtonSound(el){
+  el.addEventListener('mouseenter', ()=>{ try{ hoverAudio.currentTime=0; hoverAudio.play(); }catch(e){} });
+  el.addEventListener('click', ()=>{ try{ clickAudio.currentTime=0; clickAudio.play(); }catch(e){} });
+}
+/* Attach to existing buttons */
+document.querySelectorAll('button,input[type="range"]').forEach(attachButtonSound);
+
+/* Helper: load image with cache */
+function loadImage(url){
+  return new Promise((resolve)=>{
+    if(!url){ resolve(null); return; }
+    if(state.imagesCache[url]) {
+      if(state.imagesCache[url].complete) resolve(state.imagesCache[url]);
+      else state.imagesCache[url].addEventListener('load', ()=>resolve(state.imagesCache[url]));
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = ()=>{ state.imagesCache[url] = img; resolve(img); };
+    img.onerror = ()=>{ console.warn('image load error',url); resolve(null); };
+    img.src = url;
+    state.imagesCache[url] = img;
+  });
+}
+
+/* Build layer UI */
+function buildLayersUI(){
+  layersContainer.innerHTML = '';
+  layers.sort((a,b)=>a.id-b.id).forEach(layer=>{
+    const wrap = document.createElement('div'); wrap.className='layer'; wrap.dataset.layerId = layer.id;
+    const header = document.createElement('div'); header.className='layer-header';
+    const title = document.createElement('div'); title.className='layer-title'; title.textContent = `${layer.title} (id:${layer.id})`;
+    header.appendChild(title);
+
+    if(layer.editable){
+      const toggle = document.createElement('button'); toggle.className='toggle-btn'; toggle.innerHTML = '&#x3e;'; // >
+      toggle.title = '切り替えを表示';
+      toggle.addEventListener('click', (e)=>{
+        // only one open at a time
+        if(state.expandOpen === layer.id) state.expandOpen = null;
+        else state.expandOpen = layer.id;
+        renderLayers(); // re-render to show/hide
+      });
+      header.appendChild(toggle);
+    } else {
+      const lock = document.createElement('div'); lock.style.opacity=0.7; lock.style.fontSize='13px'; lock.textContent='編集不可';
+      header.appendChild(lock);
+    }
+
+    wrap.appendChild(header);
+
+    // options container (will be toggled)
+    const opts = document.createElement('div'); opts.className='options'; opts.style.display = (state.expandOpen===layer.id ? 'flex' : 'none');
+
+    if(layer.editable){
+      // populate options
+      layer.options.forEach(async (opt, idx)=>{
+        const el = document.createElement('div'); el.className='opt';
+        el.title = opt.label || ('option-'+idx);
+        // if label is color
+        const isColor = /^#([0-9a-f]{3,8})$/i.test(opt.label);
+        if(isColor){
+          const sw = document.createElement('div'); sw.className='swatch';
+          sw.style.background = opt.label;
+          el.appendChild(sw);
+        } else if(opt.url){
+          const img = document.createElement('img'); img.src = opt.url; img.alt = opt.label || '';
+          el.appendChild(img);
+          // small label
+          const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = opt.label;
+          el.appendChild(lbl);
+        } else {
+          // just text label (no image)
+          const txt = document.createElement('div'); txt.style.padding='4px'; txt.style.fontSize='13px'; txt.textContent = opt.label || 'none';
+          el.appendChild(txt);
+        }
+
+        // selected highlight
+        if(state.selected[layer.id] === idx) el.classList.add('selected');
+        el.addEventListener('click', async ()=>{
+          state.selected[layer.id] = idx;
+          // close opened panel only if the UI should restore to closed after selection? spec: "もう一度押すと戻るが戻らないと他のレイヤーのは押せない"
+          // We'll toggle open -> close on second click. But keep behavior simple: close this panel after selecting.
+          state.expandOpen = null;
+          renderLayers();
+          await redrawComposite();
+        });
+        opts.appendChild(el);
+        // preload images
+        if(opt.url) loadImage(opt.url);
+      });
+    } else {
+      const hint = document.createElement('div'); hint.style.fontSize='13px'; hint.style.opacity=0.8; hint.textContent = 'このレイヤーは描画専用です';
+      opts.appendChild(hint);
+    }
+
+    wrap.appendChild(opts);
+    layersContainer.appendChild(wrap);
+  });
+}
+
+/* Render layers UI depending on state (keeps selection border) */
+function renderLayers(){
+  // rebuild to reflect selected/expanded states
+  buildLayersUI();
+}
+
+/* Choose random initial selections */
+function randomizeSelections(){
+  layers.forEach(layer=>{
+    if(!layer.editable) return;
+    if(!layer.options || layer.options.length===0) return;
+    const idx = Math.floor(Math.random()*layer.options.length);
+    state.selected[layer.id] = idx;
+  });
+}
+
+/* Reset to first options (or blank) */
+function resetSelections(){
+  layers.forEach(layer=>{
+    if(!layer.editable) return;
+    state.selected[layer.id] = 0;
+  });
+}
+
+/* Draw composite canvas in order of layer.id ascending */
+async function redrawComposite(){
+  const size = state.canvasSize;
+  ctx.clearRect(0,0,size,size);
+  // optionally show background grid (for preview)
+  const showGrid = document.getElementById('showGrid').checked;
+  if(showGrid){
+    ctx.save();
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0,0,size,size);
+    ctx.restore();
+  } else {
+    ctx.clearRect(0,0,size,size);
+  }
+
+  for(const layer of layers){
+    if(layer.id === 4) continue; // drawing handled separately
+    if(!layer.editable) continue;
+    const sel = state.selected[layer.id];
+    if(sel === undefined) continue;
+    const opt = layer.options[sel];
+    if(!opt) continue;
+    // if option url is empty (e.g. "なし"), skip (leave transparent)
+    if(!opt.url) continue;
+    const img = await loadImage(opt.url);
+    if(!img) continue;
+    // draw image scaled to fit canvas (cover)
+    drawImageCover(ctx, img, 0,0,size,size);
+  }
+  // finally composite the drawLayer (user drawing) above
+  // we copy pixels from drawCtx (visible canvas) to composite ctx:
+  ctx.drawImage(drawLayer, 0,0, size, size);
+}
+
+/* drawImageCover: cover-style draw (like CSS background-size:cover) */
+function drawImageCover(ctx, img, x, y, w, h){
+  const iw = img.width, ih = img.height;
+  if(!iw || !ih){ ctx.globalAlpha = 1; return; }
+  const r = Math.max(w/iw, h/ih);
+  const nw = iw * r, nh = ih * r;
+  const cx = (nw - w) / 2, cy = (nh - h) / 2;
+  ctx.drawImage(img, -cx + x, -cy + y, nw, nh);
+}
+
+/* Save composite to PNG and download */
+async function saveComposite(){
+  // create temporary canvas to composite all layers and drawing at full size
+  const size = state.canvasSize;
+  const tmp = document.createElement('canvas'); tmp.width = size; tmp.height = size;
+  const tctx = tmp.getContext('2d');
+  // background (white)
+  tctx.clearRect(0,0,size,size);
+  for(const layer of layers){
+    if(layer.id === 4) continue;
+    if(!layer.editable) continue;
+    const sel = state.selected[layer.id];
+    if(sel === undefined) continue;
+    const opt = layer.options[sel];
+    if(!opt) continue;
+    if(!opt.url) continue;
+    const img = await loadImage(opt.url);
+    if(!img) continue;
+    drawImageCover(tctx, img, 0,0,size,size);
+  }
+  // draw the drawing layer on top
+  tctx.drawImage(drawLayer, 0,0, size, size);
+  // download
+  const a = document.createElement('a');
+  a.href = tmp.toDataURL('image/png');
+  a.download = `custom_snack_${Date.now()}.png`;
+  a.click();
+}
+
+/* ---------------------------
+   Drawing (手書き / 消しゴム)
+   We use drawLayer canvas for visible strokes and keep everything there.
+   Eraser should only erase what's drawn (not underlying images) -> using destination-out is enough
+   because we only modify drawLayer.
+---------------------------- */
+let drawing = false;
+let erasing = false;
+let brushSize = parseInt(sizeRange.value,10) || 18;
+sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7)+'px';
+sizePreview.textContent = '';
+drawCtx.lineCap = 'round';
+drawCtx.lineJoin = 'round';
+drawCtx.strokeStyle = '#000';
+drawCtx.lineWidth = brushSize;
+
+function setBrushSize(s){
+  brushSize = s;
+  drawCtx.lineWidth = brushSize;
+  sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7)+'px';
+}
+
+sizeRange.addEventListener('input', (e)=>{ setBrushSize(parseInt(e.target.value,10)); });
+
+writeModeBtn.addEventListener('click', ()=>{
+  erasing = false;
+  writeModeBtn.style.opacity = 1;
+  eraseModeBtn.style.opacity = 0.8;
+});
+eraseModeBtn.addEventListener('click', ()=>{
+  erasing = true;
+  eraseModeBtn.style.opacity = 1;
+  writeModeBtn.style.opacity = 0.8;
+});
+clearDrawBtn.addEventListener('click', ()=>{ drawCtx.clearRect(0,0,drawLayer.width,drawLayer.height); redrawComposite(); });
+
+/* pointer events for drawing */
+function getPointerPos(evt){
+  const rect = drawLayer.getBoundingClientRect();
+  const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+  const x = (clientX - rect.left) * (drawLayer.width / rect.width);
+  const y = (clientY - rect.top) * (drawLayer.height / rect.height);
+  return {x,y};
+}
+
+let last = null;
+function pointerDown(e){
+  e.preventDefault();
+  drawing = true;
+  last = getPointerPos(e);
+  drawCtx.save();
+  if(erasing){
+    // eraser: make composite operation that removes pixels from drawLayer only
+    drawCtx.globalCompositeOperation = 'destination-out';
+    drawCtx.strokeStyle = 'rgba(0,0,0,1)';
+  } else {
+    drawCtx.globalCompositeOperation = 'source-over';
+    drawCtx.strokeStyle = '#000';
+  }
+  drawCtx.lineWidth = brushSize;
+  drawCtx.beginPath();
+  drawCtx.moveTo(last.x,last.y);
+}
+function pointerMove(e){
+  if(!drawing) return;
+  const p = getPointerPos(e);
+  drawCtx.lineTo(p.x,p.y);
+  drawCtx.stroke();
+  last = p;
+}
+function pointerUp(e){
+  if(!drawing) return;
+  drawing = false;
+  drawCtx.closePath();
+  drawCtx.restore();
+  redrawComposite(); // update preview composite
+}
+drawLayer.addEventListener('mousedown', pointerDown);
+drawLayer.addEventListener('touchstart', pointerDown, {passive:false});
+window.addEventListener('mousemove', pointerMove);
+window.addEventListener('touchmove', pointerMove, {passive:false});
+window.addEventListener('mouseup', pointerUp);
+window.addEventListener('touchend', pointerUp);
+
+/* initialization */
+async function init(){
+  // ensure drawLayer is cleared and background white for preview if desired
+  drawLayer.style.pointerEvents='auto';
+  // random initial selections
+  randomizeSelections();
+  buildLayersUI();
+  await redrawComposite();
+
+  // set default modes
+  writeModeBtn.style.opacity = 1;
+  eraseModeBtn.style.opacity = 0.8;
+
+  // wire buttons
+  randomizeBtn.addEventListener('click', async ()=>{
+    randomizeSelections();
+    renderLayers();
+    await redrawComposite();
+  });
+  resetBtn.addEventListener('click', async ()=>{
+    resetSelections();
+    renderLayers();
+    await redrawComposite();
+  });
+  saveBtn.addEventListener('click', saveComposite);
+
+  // keyboard: 'e' toggle eraser
+  window.addEventListener('keydown',(e)=>{ if(e.key==='e') { erasing = !erasing; eraseModeBtn.style.opacity = erasing?1:0.8; writeModeBtn.style.opacity = erasing?0.8:1; } });
+
+  // small: render initial selected highlighting
+  renderLayers();
+}
+
+/* Start */
+init();
+
+</script>
+</body>
+</html>
