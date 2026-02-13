@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>カスタムお菓子メーカー（チョコ風UI）</title>
+<title>goghチョコ</title>
 <style>
   :root{
     --choco-1:#4b2e2a;
@@ -113,11 +113,11 @@
 <div class="app" role="application" aria-label="カスタムお菓子メーカー">
   <div class="preview" aria-hidden="false">
     <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between">
-      <h1 style="margin:0;color:var(--cream);font-size:18px">カスタムお菓子メーカー</h1>
+      <h1 style="margin:0;color:var(--cream);font-size:18px">バレンタイン</h1>
       <div style="display:flex;gap:8px;align-items:center;">
         <button class="btn" id="randomizeBtn" title="ランダム">ランダム</button>
         <button class="btn secondary" id="resetBtn" title="リセット">リセット</button>
-        <button class="btn" id="saveBtn" title="画像を保存">保存 (PNG)</button>
+        <button class="btn" id="saveBtn" title="画像を保存">保存</button>
       </div>
     </div>
 
@@ -132,14 +132,14 @@
 
     <div class="controls">
       <div class="toolbox">
-        <button class="btn" id="writeModeBtn">文字/手書きモード</button>
+        <button class="btn" id="writeModeBtn">ペン</button>
         <button class="btn" id="eraseModeBtn">消しゴム</button>
         <label style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:13px;color:var(--cream)">太さ</span>
           <input id="sizeRange" type="range" min="2" max="80" value="18">
         </label>
         <div class="size-indicator" id="sizePreview"></div>
-        <button class="btn secondary" id="clearDrawBtn">描画をクリア</button>
+        <button class="btn secondary" id="clearDrawBtn">クリア</button>
       </div>
 
       <div style="display:flex;gap:8px;align-items:center;">
