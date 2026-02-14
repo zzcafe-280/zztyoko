@@ -823,23 +823,6 @@ init();
    For posts display we use usersCache to reflect anon flag in real-time */
 
 
-/* Re-render send list when usersCache changes (function declared earlier but re-defining to ensure closure access) */
-function renderSendList(){
-  sendListEl.innerHTML = '';
-  const names = Object.keys(usersCache).sort((a,b)=>a.localeCompare(b));
-  names.forEach(name=>{
-    if(currentUser && name === currentUser) return;
-    const info = usersCache[name];
-    const entry = document.createElement('div'); entry.className='user-entry';
-    const nm = document.createElement('div'); nm.className='user-name';
-    nm.textContent = info.anon ? '匿名さん' : name;
-    const btn = document.createElement('button'); btn.className='btn ghost'; btn.textContent = '送る';
-    entry.appendChild(nm); entry.appendChild(btn);
-    entry.addEventListener('click', ()=> sendToUser(name) );
-    btn.addEventListener('click',(e)=>{ e.stopPropagation(); sendToUser(name); });
-    sendListEl.appendChild(entry);
-  });
-}
 
 /* Ensure we export functions used above to global scope if needed (for debugging) */
 window._gogh = { getCompositeDataURL, saveUserProfile, sendToUser, getUserProfile };
