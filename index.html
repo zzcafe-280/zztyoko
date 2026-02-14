@@ -54,7 +54,6 @@
     border:none;padding:10px 14px;border-radius:10px;cursor:pointer;
     box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     font-weight:600;
-    font-size:14px;
   }
   .btn.secondary{
     background: linear-gradient(180deg,var(--cream),#f0e7db);
@@ -65,12 +64,15 @@
   /* Right: layers list */
   .layers{
     flex:1;min-width:320px;max-width:420px;padding:8px;overflow:auto;
-    max-height:800px;
+    max-height:700px;
   }
   .layers h2{margin:6px 0 12px 10px;color:var(--cream);}
   .layer{
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
     margin:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+  }
+  .layer.hidden-ui{
+    display:none;
   }
   .layer-header{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -78,22 +80,33 @@
   .layer-title{font-weight:700;color:var(--cream)}
   .toggle-btn{
     background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--cream);cursor:pointer;
-    font-size:14px;
+    transition: all 0.2s ease;
   }
-  .options{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;}
+  .toggle-btn:hover{
+    background:rgba(255,255,255,0.05);
+  }
+  .toggle-btn.open{
+    transform: rotate(90deg);
+  }
+  .options{margin-top:10px;display:none;flex-wrap:wrap;gap:8px;}
+  .options.open{display:flex;}
   .opt{
     width:56px;height:56px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;
     border:2px solid rgba(0,0,0,0.3);cursor:pointer;position:relative;
+    transition: all 0.15s ease;
+  }
+  .opt:hover{
+    transform: scale(1.08);
   }
   .opt img{max-width:100%;max-height:100%;object-fit:cover;display:block;}
   .opt .label {
     position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.38);color:white;font-size:10px;padding:2px;border-radius:4px;text-align:center;
+    max-height:20px;overflow:hidden;text-overflow:ellipsis;
   }
   .swatch{
-    width:40px;height:40px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
+    width:48px;height:48px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
   }
   .opt.selected{outline:3px solid var(--accent);box-shadow: 0 4px 12px rgba(211,155,125,0.18);}
-  .opt.hidden{display:none;}
 
   /* Text/draw tool */
   .toolbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;}
@@ -110,7 +123,6 @@
     .app{flex-direction:column;align-items:center;}
     .preview{width:100%}
     .layers{width:100%;max-height:none;}
-    .canvas-wrap{width:100%;height:auto;aspect-ratio:1/1;}
   }
 
 </style>
@@ -118,9 +130,9 @@
 <body>
 <div class="app" role="application" aria-label="カスタムお菓子メーカー">
   <div class="preview" aria-hidden="false">
-    <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between;flex-wrap:wrap;">
       <h1 style="margin:0;color:var(--cream);font-size:18px">バレンタイン</h1>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="btn" id="randomizeBtn" title="ランダム">ランダム</button>
         <button class="btn secondary" id="resetBtn" title="リセット">リセット</button>
         <button class="btn" id="saveBtn" title="画像を保存">保存</button>
@@ -128,10 +140,7 @@
     </div>
 
     <div class="canvas-wrap">
-      <!-- Visible composite canvas -->
       <canvas id="composite" width="526" height="526" aria-label="プレビュー"></canvas>
-
-      <!-- drawing canvas (topmost) - same size but absolute overlay -->
       <canvas id="drawLayer" width="526" height="526" style="position:absolute;left:calc(50% - 263px);top:calc(50% - 263px);width:526px;height:526px;border-radius:8px;pointer-events:auto;"></canvas>
     </div>
 
@@ -141,7 +150,7 @@
         <button class="btn" id="eraseModeBtn">消しゴム</button>
         <label style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:13px;color:var(--cream)">太さ</span>
-          <input id="sizeRange" type="range" min="2" max="40" value="9">
+          <input id="sizeRange" type="range" min="1" max="40" value="9">
         </label>
         <div class="size-indicator" id="sizePreview"></div>
         <button class="btn secondary" id="clearDrawBtn">クリア</button>
@@ -155,28 +164,30 @@
   </aside>
 </div>
 
-<div class="note"><a href="https://pocket-se.info/">ポケットサウンド/効果音素材</a></div>
+<div class="note"><a href="https://pocket-se.info/">ポケットサウンド</a></div>
 
-<!-- audio elements -->
 <audio id="hoverAudio" preload="auto" src="ppp.mp3"></audio>
 <audio id="clickAudio" preload="auto" src="pp.mp3"></audio>
 
 <script>
 /*
   シングルファイルで完結するカスタムお菓子メーカーの実装
+  - キャンバスサイズ: 526×526
   - 各レイヤーは同サイズの画像群から選べる
   - 初期はランダムで1つずつ選択
-  - レイヤーを切り替えるUI（1つだけ展開）
-  - hidden:true で選択UI非表示、画像は表示される
-  - 描画（文字や手書き）用のトップレイヤー（黒、太さ可変）
-  - 消しゴムは描画レイヤー上の描いた線のみ消す（下の画像は消さない）
+  - レイヤーを切り替えるUI（1つだけ展開、明示的に閉じるボタンで戻す）
+  - hidden: true の場合、UIボタンは非表示だが画像は表示される
+  - タイトルの横にID表示なし
+  - 背景チェックボタンなし
+  - 色のマークなし
+  - 描画レイヤー: 黒、太さ可変（最大40、初期9）
+  - 消しゴム: 描いた線のみ消す
   - 保存ボタンで合成してPNGをダウンロード
-  - UIはチョコレート風の色合い
+  - UIはチョコ風カラー
   - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生
 */
 
 const layers = [
-  // 背景レイヤー（最下層）
   { id: 0, title: "背景", editable: true, options: [
       { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zzke-ki/main/1001.png", hidden: false },
       { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1002.png", hidden: false },
@@ -212,7 +223,6 @@ const layers = [
       { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1032.png", hidden: false },
       { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1033.png", hidden: false }
     ]},
-  // 袋
   { id: 1, title: "袋色", editable: true, options: [
       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/201.png", hidden: false },
       { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/202.png", hidden: false },
@@ -242,20 +252,17 @@ const layers = [
       { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/220.png", hidden: false },
       { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/210.png", hidden: false }
     ]},
-  // ロゴ等
   { id: 2, title: "クリーム", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/301.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png", hidden: false },
       { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/303.png", hidden: false }
     ]},
-
   { id: 3, title: "板チョコ", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/402.png", hidden: false },
       { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/403.png", hidden: false }
     ]},
-
-  { id: 4, title: "おもちゃ", editable: true, options: [
+  { id: 5, title: "おもちゃ", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/502.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/503.png", hidden: false },
@@ -263,12 +270,10 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png", hidden: false }
     ]},
-
-  { id: 5, title: "きらめき", editable: true, options: [
+  { id: 6, title: "", editable: true, options: [
       { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: false }
     ]},
-
-  { id: 6, title: "おもちゃ2", editable: true, options: [
+  { id: 7, title: "おもちゃ", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/603.png", hidden: false },
@@ -278,27 +283,19 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/607.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png", hidden: false }
     ]},
-
-  { id: 7, title: "おもちゃ2", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: true }
+  { id: 8, title: "おもちゃ2", editable: true, options: [
+      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: false }
     ]},
-
-  // 最上位（描画は専用レイヤーとして扱いますが、見た目上のレイヤー情報を持たせる）
-  { id: 8, title: "", editable: false, options: [] },
   { id: 9, title: "", editable: false, options: [] }
 ];
 
-/* ---------------------------
-   内部状態
----------------------------- */
 const state = {
-  selected: {}, // layerId -> optionIndex
-  imagesCache: {}, // url -> HTMLImageElement
-  expandOpen: null, // 展開されているレイヤーID（1つだけ）
+  selected: {},
+  imagesCache: {},
+  expandOpen: null,
   canvasSize: 526
 };
 
-/* Elements */
 const layersContainer = document.getElementById('layersContainer');
 const composite = document.getElementById('composite');
 const drawLayer = document.getElementById('drawLayer');
@@ -315,15 +312,11 @@ const randomizeBtn = document.getElementById('randomizeBtn');
 const resetBtn = document.getElementById('resetBtn');
 const saveBtn = document.getElementById('saveBtn');
 
-/* Play sounds on all buttons: hover -> ppp.mp3, click -> pp.mp3 */
 function attachButtonSound(el){
   el.addEventListener('mouseenter', ()=>{ try{ hoverAudio.currentTime=0; hoverAudio.play(); }catch(e){} });
   el.addEventListener('click', ()=>{ try{ clickAudio.currentTime=0; clickAudio.play(); }catch(e){} });
 }
-/* Attach to existing buttons */
-document.querySelectorAll('button,input[type="range"]').forEach(attachButtonSound);
 
-/* Helper: load image with cache */
 function loadImage(url){
   return new Promise((resolve)=>{
     if(!url){ resolve(null); return; }
@@ -341,138 +334,162 @@ function loadImage(url){
   });
 }
 
-/* Build layer UI */
 function buildLayersUI(){
   layersContainer.innerHTML = '';
   layers.sort((a,b)=>a.id-b.id).forEach(layer=>{
-    const wrap = document.createElement('div'); wrap.className='layer'; wrap.dataset.layerId = layer.id;
-    const header = document.createElement('div'); header.className='layer-header';
-    const title = document.createElement('div'); title.className='layer-title'; 
+    const wrap = document.createElement('div'); 
+    wrap.className='layer'; 
+    wrap.dataset.layerId = layer.id;
+    
+    // ボタンが非表示の場合のみクラスを追加（ただし層自体は表示）
+    const hasHiddenOptions = layer.editable && layer.options && layer.options.some(o => o.hidden);
+    const allHidden = layer.editable && layer.options && layer.options.every(o => o.hidden);
+    if(allHidden) wrap.classList.add('hidden-ui');
+
+    const header = document.createElement('div'); 
+    header.className='layer-header';
+    const title = document.createElement('div'); 
+    title.className='layer-title'; 
     title.textContent = layer.title;
     header.appendChild(title);
 
     if(layer.editable){
-      const toggle = document.createElement('button'); toggle.className='toggle-btn'; toggle.innerHTML = '&#x3e;'; // >
-      toggle.title = '切り替えを表示';
+      const toggle = document.createElement('button'); 
+      toggle.className='toggle-btn'; 
+      toggle.innerHTML = '&#x3e;';
+      toggle.title = '切り替えを表示/非表示';
       toggle.addEventListener('click', (e)=>{
-        // only one open at a time
-        if(state.expandOpen === layer.id) state.expandOpen = null;
-        else state.expandOpen = layer.id;
-        renderLayers(); // re-render to show/hide
+        e.preventDefault();
+        if(state.expandOpen === layer.id) {
+          state.expandOpen = null;
+        } else {
+          state.expandOpen = layer.id;
+        }
+        renderLayers();
       });
       header.appendChild(toggle);
     } else {
-      // 編集不可レイヤーは何も表示しない
+      const lock = document.createElement('div'); 
+      lock.style.opacity=0.7; 
+      lock.style.fontSize='13px'; 
+      lock.textContent='編集不可';
+      header.appendChild(lock);
     }
 
     wrap.appendChild(header);
 
-    // options container (will be toggled)
-    const opts = document.createElement('div'); opts.className='options'; opts.style.display = (state.expandOpen===layer.id ? 'flex' : 'none');
+    const opts = document.createElement('div'); 
+    opts.className='options'; 
+    if(state.expandOpen === layer.id) opts.classList.add('open');
 
     if(layer.editable){
-      // populate options
       layer.options.forEach(async (opt, idx)=>{
-        const el = document.createElement('div'); el.className='opt';
-        if(opt.hidden) el.classList.add('hidden');
+        // hidden: true の場合、ボタンを作らない（画像は下レイヤーで表示される）
+        if(opt.hidden) return;
+
+        const el = document.createElement('div'); 
+        el.className='opt';
         el.title = opt.label || ('option-'+idx);
-        // if label is color
+        
         const isColor = /^#([0-9a-f]{3,8})$/i.test(opt.label);
         if(isColor){
-          const sw = document.createElement('div'); sw.className='swatch';
+          const sw = document.createElement('div'); 
+          sw.className='swatch';
           sw.style.background = opt.label;
           el.appendChild(sw);
         } else if(opt.url){
-          const img = document.createElement('img'); img.src = opt.url; img.alt = opt.label || '';
+          const img = document.createElement('img'); 
+          img.src = opt.url; 
+          img.alt = opt.label || '';
           el.appendChild(img);
-          // small label
-          const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = opt.label;
+          const lbl = document.createElement('div'); 
+          lbl.className='label'; 
+          lbl.textContent = opt.label;
           el.appendChild(lbl);
         } else {
-          // just text label (no image)
-          const txt = document.createElement('div'); txt.style.padding='4px'; txt.style.fontSize='13px'; txt.textContent = opt.label || 'none';
+          const txt = document.createElement('div'); 
+          txt.style.padding='4px'; 
+          txt.style.fontSize='13px'; 
+          txt.textContent = opt.label || 'none';
           el.appendChild(txt);
         }
 
-        // selected highlight
         if(state.selected[layer.id] === idx) el.classList.add('selected');
+        
         el.addEventListener('click', async ()=>{
           state.selected[layer.id] = idx;
-          state.expandOpen = null;
           renderLayers();
           await redrawComposite();
         });
+        
         opts.appendChild(el);
-        // preload images
         if(opt.url) loadImage(opt.url);
       });
     } else {
-      // 編集不可レイヤーはオプションを表示しない
+      const hint = document.createElement('div'); 
+      hint.style.fontSize='13px'; 
+      hint.style.opacity=0.8; 
+      hint.textContent = 'このレイヤーは描画専用です';
+      opts.appendChild(hint);
     }
 
     wrap.appendChild(opts);
     layersContainer.appendChild(wrap);
   });
+  
+  document.querySelectorAll('.toggle-btn').forEach(btn => attachButtonSound(btn));
 }
 
-/* Render layers UI depending on state (keeps selection border) */
 function renderLayers(){
-  // rebuild to reflect selected/expanded states
   buildLayersUI();
 }
 
-/* Choose random initial selections */
 function randomizeSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
     if(!layer.options || layer.options.length===0) return;
-    // 非表示のオプションを除いてランダム選択
-    const visibleOptions = layer.options.map((opt, idx) => ({ opt, idx })).filter(item => !item.opt.hidden);
-    if(visibleOptions.length === 0) return;
-    const randomItem = visibleOptions[Math.floor(Math.random() * visibleOptions.length)];
-    state.selected[layer.id] = randomItem.idx;
-  });
-}
-
-/* Reset to first visible options (or blank) */
-function resetSelections(){
-  layers.forEach(layer=>{
-    if(!layer.editable) return;
-    // 最初の非表示でないオプション、またはあれば最初のオプションを選択
-    const visibleOptions = layer.options.map((opt, idx) => ({ opt, idx })).filter(item => !item.opt.hidden);
-    if(visibleOptions.length > 0) {
-      state.selected[layer.id] = visibleOptions[0].idx;
-    } else {
+    const visibleOptions = layer.options.filter(o => !o.hidden);
+    if(visibleOptions.length === 0) {
+      // すべて hidden の場合は最初の hidden option を選ぶ
       state.selected[layer.id] = 0;
+    } else {
+      const randomIdx = Math.floor(Math.random() * visibleOptions.length);
+      const actualIdx = layer.options.indexOf(visibleOptions[randomIdx]);
+      state.selected[layer.id] = actualIdx;
     }
   });
 }
 
-/* Draw composite canvas in order of layer.id ascending */
+function resetSelections(){
+  layers.forEach(layer=>{
+    if(!layer.editable) return;
+    state.selected[layer.id] = 0;
+  });
+}
+
 async function redrawComposite(){
   const size = state.canvasSize;
   ctx.clearRect(0,0,size,size);
-  // clear composite (transparent background)
-  ctx.clearRect(0,0,size,size);
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,size,size);
+  ctx.restore();
 
   for(const layer of layers){
+    if(layer.id === 9) continue;
     if(!layer.editable) continue;
     const sel = state.selected[layer.id];
     if(sel === undefined) continue;
     const opt = layer.options[sel];
     if(!opt) continue;
-    // if option url is empty (e.g. "なし"), skip (leave transparent)
     if(!opt.url) continue;
     const img = await loadImage(opt.url);
     if(!img) continue;
-    // draw image scaled to fit canvas (cover)
     drawImageCover(ctx, img, 0,0,size,size);
   }
-  // finally composite the drawLayer (user drawing) above
   ctx.drawImage(drawLayer, 0,0, size, size);
 }
 
-/* drawImageCover: cover-style draw (like CSS background-size:cover) */
 function drawImageCover(ctx, img, x, y, w, h){
   const iw = img.width, ih = img.height;
   if(!iw || !ih){ ctx.globalAlpha = 1; return; }
@@ -482,15 +499,20 @@ function drawImageCover(ctx, img, x, y, w, h){
   ctx.drawImage(img, -cx + x, -cy + y, nw, nh);
 }
 
-/* Save composite to PNG and download */
 async function saveComposite(){
-  // create temporary canvas to composite all layers and drawing at full size
   const size = state.canvasSize;
-  const tmp = document.createElement('canvas'); tmp.width = size; tmp.height = size;
+  const tmp = document.createElement('canvas'); 
+  tmp.width = size; 
+  tmp.height = size;
   const tctx = tmp.getContext('2d');
-  // background (transparent)
   tctx.clearRect(0,0,size,size);
+  tctx.save();
+  tctx.fillStyle = '#fff';
+  tctx.fillRect(0,0,size,size);
+  tctx.restore();
+
   for(const layer of layers){
+    if(layer.id === 9) continue;
     if(!layer.editable) continue;
     const sel = state.selected[layer.id];
     if(sel === undefined) continue;
@@ -501,22 +523,18 @@ async function saveComposite(){
     if(!img) continue;
     drawImageCover(tctx, img, 0,0,size,size);
   }
-  // draw the drawing layer on top
   tctx.drawImage(drawLayer, 0,0, size, size);
-  // download
+  
   const a = document.createElement('a');
   a.href = tmp.toDataURL('image/png');
   a.download = `custom_snack_${Date.now()}.png`;
   a.click();
 }
 
-/* ---------------------------
-   Drawing (手書き / 消しゴム)
----------------------------- */
 let drawing = false;
 let erasing = false;
 let brushSize = parseInt(sizeRange.value,10) || 9;
-sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7)+'px';
+sizePreview.style.width = sizePreview.style.height = Math.max(24,brushSize*0.8)+'px';
 sizePreview.textContent = '';
 drawCtx.lineCap = 'round';
 drawCtx.lineJoin = 'round';
@@ -526,7 +544,7 @@ drawCtx.lineWidth = brushSize;
 function setBrushSize(s){
   brushSize = s;
   drawCtx.lineWidth = brushSize;
-  sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7)+'px';
+  sizePreview.style.width = sizePreview.style.height = Math.max(24,brushSize*0.8)+'px';
 }
 
 sizeRange.addEventListener('input', (e)=>{ setBrushSize(parseInt(e.target.value,10)); });
@@ -536,14 +554,18 @@ writeModeBtn.addEventListener('click', ()=>{
   writeModeBtn.style.opacity = 1;
   eraseModeBtn.style.opacity = 0.8;
 });
+
 eraseModeBtn.addEventListener('click', ()=>{
   erasing = true;
   eraseModeBtn.style.opacity = 1;
   writeModeBtn.style.opacity = 0.8;
 });
-clearDrawBtn.addEventListener('click', ()=>{ drawCtx.clearRect(0,0,drawLayer.width,drawLayer.height); redrawComposite(); });
 
-/* pointer events for drawing */
+clearDrawBtn.addEventListener('click', ()=>{ 
+  drawCtx.clearRect(0,0,drawLayer.width,drawLayer.height); 
+  redrawComposite(); 
+});
+
 function getPointerPos(evt){
   const rect = drawLayer.getBoundingClientRect();
   const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
@@ -570,6 +592,7 @@ function pointerDown(e){
   drawCtx.beginPath();
   drawCtx.moveTo(last.x,last.y);
 }
+
 function pointerMove(e){
   if(!drawing) return;
   const p = getPointerPos(e);
@@ -577,6 +600,7 @@ function pointerMove(e){
   drawCtx.stroke();
   last = p;
 }
+
 function pointerUp(e){
   if(!drawing) return;
   drawing = false;
@@ -584,6 +608,7 @@ function pointerUp(e){
   drawCtx.restore();
   redrawComposite();
 }
+
 drawLayer.addEventListener('mousedown', pointerDown);
 drawLayer.addEventListener('touchstart', pointerDown, {passive:false});
 window.addEventListener('mousemove', pointerMove);
@@ -591,39 +616,41 @@ window.addEventListener('touchmove', pointerMove, {passive:false});
 window.addEventListener('mouseup', pointerUp);
 window.addEventListener('touchend', pointerUp);
 
-/* initialization */
 async function init(){
   drawLayer.style.pointerEvents='auto';
-  // random initial selections
   randomizeSelections();
   buildLayersUI();
   await redrawComposite();
 
-  // set default modes
   writeModeBtn.style.opacity = 1;
   eraseModeBtn.style.opacity = 0.8;
 
-  // wire buttons
   randomizeBtn.addEventListener('click', async ()=>{
     randomizeSelections();
     renderLayers();
     await redrawComposite();
   });
+
   resetBtn.addEventListener('click', async ()=>{
     resetSelections();
     renderLayers();
     await redrawComposite();
   });
+
   saveBtn.addEventListener('click', saveComposite);
 
-  // keyboard: 'e' toggle eraser
-  window.addEventListener('keydown',(e)=>{ if(e.key==='e') { erasing = !erasing; eraseModeBtn.style.opacity = erasing?1:0.8; writeModeBtn.style.opacity = erasing?0.8:1; } });
+  window.addEventListener('keydown',(e)=>{ 
+    if(e.key==='e') { 
+      erasing = !erasing; 
+      eraseModeBtn.style.opacity = erasing?1:0.8; 
+      writeModeBtn.style.opacity = erasing?0.8:1; 
+    } 
+  });
 
-  // small: render initial selected highlighting
+  document.querySelectorAll('button').forEach(attachButtonSound);
   renderLayers();
 }
 
-/* Start */
 init();
 
 </script>
