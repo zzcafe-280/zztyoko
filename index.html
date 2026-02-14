@@ -111,7 +111,7 @@
         <button class="btn secondary" id="clearDrawBtn">クリア</button>
       </div>
       <div style="display:flex;gap:8px;align-items:center;">
-        <div class="small-label">※保存・送信時にFirebaseへ登録します</div>
+        <div class="small-label"></div>
       </div>
     </div>
   </div>
@@ -133,7 +133,7 @@
           <div id="currentName" class="small-label" style="font-weight:800;"></div>
           <label style="display:flex;align-items:center;gap:6px;">
             <input type="checkbox" id="anonToggle">
-            <span class="small-label">匿名表示</span>
+            <span class="small-label">匿名</span>
           </label>
         </div>
       </div>
@@ -149,12 +149,12 @@
 
       <div class="lists">
         <div class="list" style="flex:1;">
-          <div style="font-weight:800;margin-bottom:6px;">送る一覧（登録ユーザー）</div>
+          <div style="font-weight:800;margin-bottom:6px;">登録ユーザー</div>
           <div id="sendList"></div>
-          <div class="small-label" style="margin-top:8px;">※名前は毎回同じに入力してください</div>
+          <div class="small-label" style="margin-top:8px;">※名前は毎回同じで</div>
         </div>
         <div class="list" style="flex:1;">
-          <div style="font-weight:800;margin-bottom:6px;">受け取り（自分宛のポスト）</div>
+          <div style="font-weight:800;margin-bottom:6px;">受け取り</div>
           <div id="postList"></div>
         </div>
       </div>
@@ -164,7 +164,7 @@
 
 <!-- small note -->
 <div class="note">
-  <div>※gogh二次創作ガイドラインの範囲内でご利用ください。</div>
+  <div>※gogh二次創作ガイドラインの範囲内でご利用ください（非公式）</div>
   <div><a href="https://pocket-se.info/" style="color:var(--cream)">ポケットサウンド</a></div>
 </div>
 
@@ -175,10 +175,10 @@
 <!-- name input modal -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <h3 id="modalTitle">送信の準備</h3>
-    <p class="small">あなたの名前（半角/全角可）。前回と同じ名前を使ってください。小さく毎回同じ名前で入力してください。</p>
+    <h3 id="modalTitle"></h3>
+    <p class="small">あなたの名前。前回と同じ名前を使ってくださ。</p>
     <input id="nameInput" class="input" placeholder="例: taro" />
-    <p class="small" style="margin-top:8px;">※同じ名前の記録がある場合は、その人専用の保存画像を読み込みます。</p>
+    <p class="small" style="margin-top:8px;"></p>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
       <button class="btn secondary" id="modalCancelBtn">キャンセル</button>
       <button class="btn" id="modalConfirmBtn">決定</button>
