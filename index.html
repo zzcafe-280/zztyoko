@@ -14,7 +14,7 @@
   }
   html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;background: linear-gradient(180deg,#2b1b18 0%, #1f1411 100%);color:var(--cream);}
   .app{
-    max-width:1100px;margin:28px auto;padding:20px;border-radius:12px;
+    max-width:750px;margin:28px auto;padding:20px;border-radius:12px;
     background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
     box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
     display:flex;gap:20px;
@@ -22,37 +22,37 @@
 
   /* Left: preview */
   .preview {
-    width:640px;
+    width:330px;
     display:flex;
     flex-direction:column;
     gap:12px;
     align-items:center;
   }
   .canvas-wrap{
-    width:600px;
-    height:600px;
+    width:300px;
+    height:300px;
     background:linear-gradient(180deg,#2a1b17 0%, #1a0f0d 100%);
     border-radius:14px;
-    padding:12px;
+    padding:6px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6), inset 0 3px 0 rgba(255,255,255,0.03);
     display:flex;align-items:center;justify-content:center;position:relative;
   }
   canvas#composite{
-    width:576px;height:576px;background:#fff;border-radius:8px;display:block;
+    width:288px;height:288px;background:#fff;border-radius:8px;display:block;
     image-rendering: crisp-edges;
     box-shadow: 0 6px 18px rgba(0,0,0,0.6);
   }
   /* Controls under preview */
   .controls{
     width:100%;
-    display:flex;gap:8px;align-items:center;justify-content:space-between;
+    display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;
   }
   .btn{
     background:linear-gradient(180deg,var(--choco-2),var(--choco-1));
     color:var(--cream);
     border:none;padding:10px 14px;border-radius:10px;cursor:pointer;
     box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    font-weight:600;
+    font-weight:600;font-size:14px;
   }
   .btn.secondary{
     background: linear-gradient(180deg,var(--cream),#f0e7db);
@@ -62,7 +62,7 @@
 
   /* Right: layers list */
   .layers{
-    flex:1;min-width:320px;max-width:420px;padding:8px;overflow:auto;
+    flex:1;min-width:300px;max-width:380px;padding:8px;overflow:auto;max-height:700px;
   }
   .layers h2{margin:6px 0 12px 10px;color:var(--cream);}
   .layer{
@@ -72,7 +72,7 @@
   .layer-header{
     display:flex;align-items:center;justify-content:space-between;gap:8px;
   }
-  .layer-title{font-weight:700;color:var(--cream)}
+  .layer-title{font-weight:700;color:var(--cream);font-size:15px;}
   .toggle-btn{
     background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--cream);cursor:pointer;
   }
@@ -88,11 +88,12 @@
   .swatch{
     width:48px;height:48px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
   }
+  .opt.hidden{display:none !important;}
   .opt.selected{outline:3px solid var(--accent);box-shadow: 0 4px 12px rgba(211,155,125,0.18);}
 
   /* Text/draw tool */
   .toolbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;}
-  .size-indicator{width:36px;height:36px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+  .size-indicator{width:36px;height:36px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;}
 
   /* small note */
   .note{position:fixed;right:14px;bottom:10px;font-size:12px;color:rgba(255,255,255,0.55);opacity:0.9}
@@ -101,10 +102,10 @@
   .btn:hover{transform:translateY(-2px);}
 
   /* Responsive */
-  @media (max-width:1100px){
+  @media (max-width:800px){
     .app{flex-direction:column;align-items:center;}
     .preview{width:100%}
-    .layers{width:100%}
+    .layers{width:100%;max-height:none;}
   }
 
 </style>
@@ -114,7 +115,7 @@
   <div class="preview" aria-hidden="false">
     <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between">
       <h1 style="margin:0;color:var(--cream);font-size:18px">バレンタイン</h1>
-      <div style="display:flex;gap:8px;align-items:center;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <button class="btn" id="randomizeBtn" title="ランダム">ランダム</button>
         <button class="btn secondary" id="resetBtn" title="リセット">リセット</button>
         <button class="btn" id="saveBtn" title="画像を保存">保存</button>
@@ -123,11 +124,10 @@
 
     <div class="canvas-wrap">
       <!-- Visible composite canvas -->
-      <canvas id="composite" width="576" height="576" aria-label="プレビュー"></canvas>
+      <canvas id="composite" width="288" height="288" aria-label="プレビュー"></canvas>
 
-      <!-- drawing canvas (topmost) - same size but absolute overlay (we keep it in JS as offscreen + visible) -->
-      <!-- We'll use an overlay element for pointer cursor and events: -->
-      <canvas id="drawLayer" width="576" height="576" style="position:absolute;left:calc(50% - 288px);top:calc(50% - 288px);width:576px;height:576px;border-radius:8px;pointer-events:auto;"></canvas>
+      <!-- drawing canvas (topmost) - same size but absolute overlay -->
+      <canvas id="drawLayer" width="288" height="288" style="position:absolute;left:calc(50% - 144px);top:calc(50% - 144px);width:288px;height:288px;border-radius:8px;pointer-events:auto;"></canvas>
     </div>
 
     <div class="controls">
@@ -136,14 +136,10 @@
         <button class="btn" id="eraseModeBtn">消しゴム</button>
         <label style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:13px;color:var(--cream)">太さ</span>
-          <input id="sizeRange" type="range" min="2" max="80" value="18">
+          <input id="sizeRange" type="range" min="1" max="40" value="9">
         </label>
         <div class="size-indicator" id="sizePreview"></div>
         <button class="btn secondary" id="clearDrawBtn">クリア</button>
-      </div>
-
-      <div style="display:flex;gap:8px;align-items:center;">
-        <label style="font-size:13px;color:var(--cream);">背景: <input id="showGrid" type="checkbox" checked></label>
       </div>
     </div>
   </div>
@@ -154,7 +150,7 @@
   </aside>
 </div>
 
-<div class="note"><a href="https://pocket-se.info/">ポケットサウンド/効果音素材</a></div>
+<div class="note"><a href="https://pocket-se.info/" style="color:rgba(255,255,255,0.55);text-decoration:none;">ポケットサウンド/効果音素材</a></div>
 
 <!-- audio elements -->
 <audio id="hoverAudio" preload="auto" src="ppp.mp3"></audio>
@@ -171,6 +167,8 @@
   - 保存ボタンで合成してPNGをダウンロード
   - UIはチョコレート風の色合い
   - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生（ファイルはルートに置いてください）
+  - URLの前に true を付けるとUIでボタン/テキストが非表示になる
+  - キャンバスサイズは288x288（元の半分）
 */
 
 /* ---------------------------
@@ -179,115 +177,111 @@
      id: 数値（小さいほど下になる）
      title: 表示名
      editable: true/false（falseなら切り替えUIを表示しない）
-     options: [ { label: "文字または色(#xxxx)", url: "https://..." }, ... ]
-   注意: 画像はすべて同じ縦横比・サイズである前提（例: 576x576）
+     options: [ { label: "文字または色(#xxxx)", hidden: true/false, url: "https://..." }, ... ]
+   hidden: true の場合、ゲーム内UIには表示されない（コードのみで参照）
 ---------------------------- */
 const layers = [
   // 背景レイヤー（最下層）
   { id: 0, title: "背景", editable: true, options: [
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zzke-ki/main/1001.png" },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1002.png" },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1003.png" },
-    { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1004.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1005.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1006.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1007.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1008.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1009.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1010.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1011.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1012.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1013.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1014.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1015.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1016.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1017.png" },  
-    { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1018.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1019.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1020.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1021.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1022.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1023.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1024.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1025.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1026.png" },
-     { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1027.png" },
-            { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1028.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1029.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1030.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1031.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1032.png" },
-        { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1033.png" }
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zzke-ki/main/1001.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1002.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1003.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1004.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1005.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1006.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1007.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1008.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1009.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1010.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1011.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1012.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1013.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1014.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1015.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1016.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1017.png" },  
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1018.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1019.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1020.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1021.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1022.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1023.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1024.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1025.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1026.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1027.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1028.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1029.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1030.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1031.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1032.png" },
+      { label:"木目", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1033.png" }
     ]},
   // 袋
   { id: 1, title: "袋色", editable: true, options: [
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/201.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/202.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/203.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/204.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/205.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/206.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/207.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/208.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/209.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/211.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/212.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/213.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/214.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/215.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/216.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/217.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/218.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/219.png" },
-           { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/221.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/222.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/223.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/224.png" },
-       { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/225.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/226.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/227.png" },
-    { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/220.png" },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/210.png" }
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/201.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/202.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/203.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/204.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/205.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/206.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/207.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/208.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/209.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/211.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/212.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/213.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/214.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/215.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/216.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/217.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/218.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/219.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/221.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/222.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/223.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/224.png" },
+      { label:"赤袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/225.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/226.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/227.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/220.png" },
+      { label:"茶色袋", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/210.png" }
     ]},
   // ロゴ等
   { id: 2, title: "クリーム", editable: true, options: [
-     { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/301.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png" },
-      { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/303.png" }
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/301.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png" },
+      { label:"ロゴB", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/303.png" }
     ]},
-
-
-
-    { id: 3, title: "板チョコ", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/402.png" },
-      { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/403.png" }
+  // 板チョコ
+  { id: 3, title: "板チョコ", editable: true, options: [
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/402.png" },
+      { label:"ロゴB", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/403.png" }
     ]},
-
-      { id: 5, title: "おもちゃ", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/502.png" },
-           { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/503.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/504.png" },
-           { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png" }
+  // おもちゃ
+  { id: 5, title: "おもちゃ", editable: true, options: [
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/502.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/503.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/504.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png" }
     ]},
   // エフェクト
-  { id: 6, title: "", editable: true, options: [
-     { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png" }
+  { id: 6, title: "エフェクト", editable: true, options: [
+      { label:"きらめき", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png" }
     ]},
-
-
-  
-      { id: 7, title: "おもちゃ", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png" },
-           { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/603.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/604.png" },
-           { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/605.png" },
-        { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/606.png" },
-           { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/607.png" },
-           { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png" }
+  // おもちゃ2
+  { id: 7, title: "おもちゃ", editable: true, options: [
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/603.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/604.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/605.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/606.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/607.png" },
+      { label:"ロゴA", hidden: false, url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png" }
     ]},
   // 最上位（描画は専用レイヤーとして扱いますが、見た目上のレイヤー情報を持たせる）
   { id: 8, title: "手書き（上）", editable: false, options: [] }
@@ -300,7 +294,7 @@ const state = {
   selected: {}, // layerId -> optionIndex
   imagesCache: {}, // url -> HTMLImageElement
   expandOpen: null, // 展開されているレイヤーID（1つだけ）
-  canvasSize: 576
+  canvasSize: 288
 };
 
 /* Elements */
@@ -352,7 +346,7 @@ function buildLayersUI(){
   layers.sort((a,b)=>a.id-b.id).forEach(layer=>{
     const wrap = document.createElement('div'); wrap.className='layer'; wrap.dataset.layerId = layer.id;
     const header = document.createElement('div'); header.className='layer-header';
-    const title = document.createElement('div'); title.className='layer-title'; title.textContent = `${layer.title} (id:${layer.id})`;
+    const title = document.createElement('div'); title.className='layer-title'; title.textContent = `${layer.title}`;
     header.appendChild(title);
 
     if(layer.editable){
@@ -379,6 +373,7 @@ function buildLayersUI(){
       // populate options
       layer.options.forEach(async (opt, idx)=>{
         const el = document.createElement('div'); el.className='opt';
+        if(opt.hidden) el.classList.add('hidden');
         el.title = opt.label || ('option-'+idx);
         // if label is color
         const isColor = /^#([0-9a-f]{3,8})$/i.test(opt.label);
@@ -386,6 +381,17 @@ function buildLayersUI(){
           const sw = document.createElement('div'); sw.className='swatch';
           sw.style.background = opt.label;
           el.appendChild(sw);
+          // 色マーク（■）
+          const mark = document.createElement('div');
+          mark.style.position = 'absolute';
+          mark.style.top = '2px';
+          mark.style.right = '2px';
+          mark.style.width = '12px';
+          mark.style.height = '12px';
+          mark.style.background = opt.label;
+          mark.style.border = '1px solid rgba(0,0,0,0.4)';
+          mark.style.borderRadius = '2px';
+          el.appendChild(mark);
         } else if(opt.url){
           const img = document.createElement('img'); img.src = opt.url; img.alt = opt.label || '';
           el.appendChild(img);
@@ -402,8 +408,6 @@ function buildLayersUI(){
         if(state.selected[layer.id] === idx) el.classList.add('selected');
         el.addEventListener('click', async ()=>{
           state.selected[layer.id] = idx;
-          // close opened panel only if the UI should restore to closed after selection? spec: "もう一度押すと戻るが戻らないと他のレイヤーのは押せない"
-          // We'll toggle open -> close on second click. But keep behavior simple: close this panel after selecting.
           state.expandOpen = null;
           renderLayers();
           await redrawComposite();
@@ -433,16 +437,22 @@ function randomizeSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
     if(!layer.options || layer.options.length===0) return;
-    const idx = Math.floor(Math.random()*layer.options.length);
-    state.selected[layer.id] = idx;
+    // only select from non-hidden options
+    const visibleOpts = layer.options.map((o,i)=>({opt:o,idx:i})).filter(x=>!x.opt.hidden);
+    if(visibleOpts.length===0) return;
+    const chosen = visibleOpts[Math.floor(Math.random()*visibleOpts.length)];
+    state.selected[layer.id] = chosen.idx;
   });
 }
 
-/* Reset to first options (or blank) */
+/* Reset to first visible options (or blank) */
 function resetSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
-    state.selected[layer.id] = 0;
+    // find first non-hidden option
+    const firstVisible = layer.options.findIndex(o=>!o.hidden);
+    if(firstVisible >= 0) state.selected[layer.id] = firstVisible;
+    else state.selected[layer.id] = 0;
   });
 }
 
@@ -450,19 +460,14 @@ function resetSelections(){
 async function redrawComposite(){
   const size = state.canvasSize;
   ctx.clearRect(0,0,size,size);
-  // optionally show background grid (for preview)
-  const showGrid = document.getElementById('showGrid').checked;
-  if(showGrid){
-    ctx.save();
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0,0,size,size);
-    ctx.restore();
-  } else {
-    ctx.clearRect(0,0,size,size);
-  }
+  // background white
+  ctx.save();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,size,size);
+  ctx.restore();
 
   for(const layer of layers){
-    if(layer.id === 4) continue; // drawing handled separately
+    if(layer.id === 8) continue; // drawing handled separately
     if(!layer.editable) continue;
     const sel = state.selected[layer.id];
     if(sel === undefined) continue;
@@ -497,9 +502,10 @@ async function saveComposite(){
   const tmp = document.createElement('canvas'); tmp.width = size; tmp.height = size;
   const tctx = tmp.getContext('2d');
   // background (white)
-  tctx.clearRect(0,0,size,size);
+  tctx.fillStyle = '#fff';
+  tctx.fillRect(0,0,size,size);
   for(const layer of layers){
-    if(layer.id === 4) continue;
+    if(layer.id === 8) continue;
     if(!layer.editable) continue;
     const sel = state.selected[layer.id];
     if(sel === undefined) continue;
@@ -521,14 +527,11 @@ async function saveComposite(){
 
 /* ---------------------------
    Drawing (手書き / 消しゴム)
-   We use drawLayer canvas for visible strokes and keep everything there.
-   Eraser should only erase what's drawn (not underlying images) -> using destination-out is enough
-   because we only modify drawLayer.
 ---------------------------- */
 let drawing = false;
 let erasing = false;
-let brushSize = parseInt(sizeRange.value,10) || 18;
-sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7)+'px';
+let brushSize = parseInt(sizeRange.value,10) || 9;
+sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7*2)+'px';
 sizePreview.textContent = '';
 drawCtx.lineCap = 'round';
 drawCtx.lineJoin = 'round';
@@ -538,7 +541,7 @@ drawCtx.lineWidth = brushSize;
 function setBrushSize(s){
   brushSize = s;
   drawCtx.lineWidth = brushSize;
-  sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7)+'px';
+  sizePreview.style.width = sizePreview.style.height = Math.max(28,brushSize*0.7*2)+'px';
 }
 
 sizeRange.addEventListener('input', (e)=>{ setBrushSize(parseInt(e.target.value,10)); });
@@ -572,7 +575,6 @@ function pointerDown(e){
   last = getPointerPos(e);
   drawCtx.save();
   if(erasing){
-    // eraser: make composite operation that removes pixels from drawLayer only
     drawCtx.globalCompositeOperation = 'destination-out';
     drawCtx.strokeStyle = 'rgba(0,0,0,1)';
   } else {
@@ -595,7 +597,7 @@ function pointerUp(e){
   drawing = false;
   drawCtx.closePath();
   drawCtx.restore();
-  redrawComposite(); // update preview composite
+  redrawComposite();
 }
 drawLayer.addEventListener('mousedown', pointerDown);
 drawLayer.addEventListener('touchstart', pointerDown, {passive:false});
@@ -606,7 +608,6 @@ window.addEventListener('touchend', pointerUp);
 
 /* initialization */
 async function init(){
-  // ensure drawLayer is cleared and background white for preview if desired
   drawLayer.style.pointerEvents='auto';
   // random initial selections
   randomizeSelections();
