@@ -1,3 +1,7 @@
+
+
+
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -33,7 +37,7 @@
     height:300px;
     background:linear-gradient(180deg,#2a1b17 0%, #1a0f0d 100%);
     border-radius:14px;
-    padding:6px;
+    padding:12px;
     box-shadow: 0 8px 30px rgba(0,0,0,0.6), inset 0 3px 0 rgba(255,255,255,0.03);
     display:flex;align-items:center;justify-content:center;position:relative;
   }
@@ -45,7 +49,7 @@
   /* Controls under preview */
   .controls{
     width:100%;
-    display:flex;gap:8px;align-items:center;justify-content:space-between;
+    display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;
   }
   .btn{
     background:linear-gradient(180deg,var(--choco-2),var(--choco-1));
@@ -168,16 +172,16 @@
   - 保存ボタンで合成してPNGをダウンロード
   - UIはチョコレート風の色合い
   - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生（ファイルはルートに置いてください）
-  - hidden: true でオプション要素を非表示可能
+  - hidden フィールドで UI 上のボタンを非表示にしても画像は表示される
 */
 
 /* ---------------------------
    ここでレイヤー定義（コード内でだけ設定）
-   layers 配列の各要素:
+   layers 配���の各要素:
      id: 数値（小さいほど下になる）
      title: 表示名
      editable: true/false（falseなら切り替えUIを表示しない）
-     options: [ { label: "文字または色(#xxxx)", url: "https://...", hidden: false }, ... ]
+     options: [ { label: "文字または色(#xxxx)", url: "https://...", hidden: true/false }, ... ]
    注意: 画像はすべて同じ縦横比・サイズである前提（例: 288x288）
 ---------------------------- */
 const layers = [
@@ -266,10 +270,11 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png", hidden: false }
     ]},
-  { id: 6, title: "エフェクト", editable: true, options: [
+  // エフェクト
+  { id: 6, title: "", editable: true, options: [
       { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: true }
     ]},
-  { id: 7, title: "おもちゃ2", editable: true, options: [
+  { id: 7, title: "おもちゃ", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/603.png", hidden: false },
@@ -279,8 +284,6 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/607.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png", hidden: false }
     ]},
-
-
   { id: 8, title: "おもちゃ2", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: true }
     ]},
@@ -288,7 +291,6 @@ const layers = [
   // 最上位（描画は専用レイヤーとして扱いますが、見た目上のレイヤー情報を持たせる）
   { id: 9, title: "", editable: false, options: [] }
 ];
-
 /* ---------------------------
    内部状態
 ---------------------------- */
@@ -296,8 +298,7 @@ const state = {
   selected: {}, // layerId -> optionIndex
   imagesCache: {}, // url -> HTMLImageElement
   expandOpen: null, // 展開されているレイヤーID（1つだけ）
-  canvasSize: 288
-};
+  canvasSize: 526
 
 /* Elements */
 const layersContainer = document.getElementById('layersContainer');
@@ -348,7 +349,7 @@ function buildLayersUI(){
   layers.sort((a,b)=>a.id-b.id).forEach(layer=>{
     const wrap = document.createElement('div'); wrap.className='layer'; wrap.dataset.layerId = layer.id;
     const header = document.createElement('div'); header.className='layer-header';
-    const title = document.createElement('div'); title.className='layer-title'; title.textContent = layer.title;
+    const title = document.createElement('div'); title.className='layer-title'; title.textContent = `${layer.title}`;
     header.appendChild(title);
 
     if(layer.editable){
@@ -374,10 +375,8 @@ function buildLayersUI(){
     if(layer.editable){
       // populate options
       layer.options.forEach(async (opt, idx)=>{
-        // skip if hidden
-        if(opt.hidden) return;
-        
         const el = document.createElement('div'); el.className='opt';
+        if(opt.hidden) el.classList.add('hidden');
         el.title = opt.label || ('option-'+idx);
         // if label is color
         const isColor = /^#([0-9a-f]{3,8})$/i.test(opt.label);
@@ -401,8 +400,6 @@ function buildLayersUI(){
         if(state.selected[layer.id] === idx) el.classList.add('selected');
         el.addEventListener('click', async ()=>{
           state.selected[layer.id] = idx;
-          // close opened panel only if the UI should restore to closed after selection? spec: "もう一度押すと戻るが戻らないと他のレイヤーのは押せない"
-          // We'll toggle open -> close on second click. But keep behavior simple: close this panel after selecting.
           state.expandOpen = null;
           renderLayers();
           await redrawComposite();
@@ -432,10 +429,10 @@ function randomizeSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
     if(!layer.options || layer.options.length===0) return;
-    // filter out hidden options
-    const visibleOptions = layer.options.map((opt, idx) => (!opt.hidden ? idx : -1)).filter(idx => idx !== -1);
-    if(visibleOptions.length === 0) return;
-    const idx = visibleOptions[Math.floor(Math.random()*visibleOptions.length)];
+    // フィルター: hidden でないオプションのみ
+    const visibleOpts = layer.options.filter(o => !o.hidden);
+    if(visibleOpts.length === 0) return;
+    const idx = layer.options.indexOf(visibleOpts[Math.floor(Math.random()*visibleOpts.length)]);
     state.selected[layer.id] = idx;
   });
 }
@@ -444,13 +441,11 @@ function randomizeSelections(){
 function resetSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
-    // find first non-hidden option
-    const firstVisible = layer.options.findIndex(opt => !opt.hidden);
-    if(firstVisible !== -1) {
-      state.selected[layer.id] = firstVisible;
-    } else {
-      state.selected[layer.id] = 0;
-    }
+    if(!layer.options || layer.options.length===0) return;
+    // 最初の hidden でないオプションを探す
+    const firstVisibleIdx = layer.options.findIndex(o => !o.hidden);
+    if(firstVisibleIdx >= 0) state.selected[layer.id] = firstVisibleIdx;
+    else state.selected[layer.id] = 0;
   });
 }
 
@@ -458,11 +453,7 @@ function resetSelections(){
 async function redrawComposite(){
   const size = state.canvasSize;
   ctx.clearRect(0,0,size,size);
-  // background white (no checkbox anymore)
-  ctx.save();
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0,0,size,size);
-  ctx.restore();
+  ctx.clearRect(0,0,size,size);
 
   for(const layer of layers){
     if(layer.id === 8) continue; // drawing handled separately
@@ -500,8 +491,7 @@ async function saveComposite(){
   const tmp = document.createElement('canvas'); tmp.width = size; tmp.height = size;
   const tctx = tmp.getContext('2d');
   // background (white)
-  tctx.fillStyle = '#fff';
-  tctx.fillRect(0,0,size,size);
+  tctx.clearRect(0,0,size,size);
   for(const layer of layers){
     if(layer.id === 8) continue;
     if(!layer.editable) continue;
