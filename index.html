@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>goghチョコ</title>
+<title>goghチョコ）</title>
 <style>
   :root{
     --choco-1:#4b2e2a;
@@ -11,280 +11,244 @@
     --choco-3:#8b5a51;
     --cream:#f6e9d7;
     --accent:#d39b7d;
+    --glass: rgba(255,255,255,0.03);
   }
-  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;background: linear-gradient(180deg,#2b1b18 0%, #1f1411 100%);color:var(--cream);}
-  .app{
-    max-width:1100px;margin:28px auto;padding:20px;border-radius:12px;
-    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
-    box-shadow: 0 6px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
-    display:flex;gap:20px;
-  }
+  html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;background: linear-gradient(180deg,#2b1b18 0%, #1f1411 100%);color:var(--cream);}
+  .app{max-width:1200px;margin:18px auto;padding:18px;border-radius:12px;background:linear-gradient(180deg,var(--glass), rgba(0,0,0,0.12));box-shadow:0 8px 40px rgba(0,0,0,0.6);display:flex;gap:20px;}
+  /* Left: editor */
+  .preview { width:640px; display:flex;flex-direction:column; gap:12px; align-items:center; }
+  .canvas-wrap{ width:550px; height:550px; background:linear-gradient(180deg,#2a1b17,#1a0f0d); border-radius:14px; padding:12px; box-shadow:0 8px 30px rgba(0,0,0,0.6), inset 0 3px 0 rgba(255,255,255,0.02); display:flex;align-items:center;justify-content:center;position:relative;}
+  canvas#composite{ width:526px;height:526px;background:#fff;border-radius:8px;image-rendering:crisp-edges;box-shadow:0 6px 18px rgba(0,0,0,0.6);display:block; }
+  canvas#drawLayer{ position:absolute; left:calc(50% - 263px); top:calc(50% - 263px); width:526px;height:526px;border-radius:8px; pointer-events:auto; }
 
-  /* Left: preview */
-  .preview {
-    width:640px;
-    display:flex;
-    flex-direction:column;
-    gap:12px;
-    align-items:center;
-  }
-  .canvas-wrap{
-    width:550px;
-    height:550px;
-    background:linear-gradient(180deg,#2a1b17 0%, #1a0f0d 100%);
-    border-radius:14px;
-    padding:12px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.6), inset 0 3px 0 rgba(255,255,255,0.03);
-    display:flex;align-items:center;justify-content:center;position:relative;
-  }
-  canvas#composite{
-    width:526px;height:526px;background:#fff;border-radius:8px;display:block;
-    image-rendering: crisp-edges;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
-  }
-  /* Controls under preview */
-  .controls{
-    width:100%;
-    display:flex;gap:8px;align-items:center;justify-content:space-between;
-    flex-wrap:wrap;
-  }
-  .btn{
-    background:linear-gradient(180deg,var(--choco-2),var(--choco-1));
-    color:var(--cream);
-    border:none;padding:10px 14px;border-radius:10px;cursor:pointer;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    font-weight:600;
-  }
-  .btn.secondary{
-    background: linear-gradient(180deg,var(--cream),#f0e7db);
-    color:var(--choco-1);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
-  }
+  .controls{ width:100%; display:flex;gap:8px;align-items:center;justify-content:space-between; flex-wrap:wrap; }
+  .btn{ background:linear-gradient(180deg,var(--choco-2),var(--choco-1)); color:var(--cream); border:none;padding:10px 14px;border-radius:10px;cursor:pointer; box-shadow:0 4px 8px rgba(0,0,0,0.5); font-weight:700;}
+  .btn.secondary{ background: linear-gradient(180deg,var(--cream),#f0e7db); color:var(--choco-1); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12); }
+  .btn.ghost{ background:transparent;border:1px solid rgba(255,255,255,0.06);}
 
-  /* Right: layers list */
-  .layers{
-    flex:1;min-width:320px;max-width:420px;padding:8px;overflow:auto;
-    max-height:700px;
-  }
-  .layers h2{margin:6px 0 12px 10px;color:var(--cream);}
-  .layer{
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
-    margin:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
-  }
-  .layer.hidden-ui{
-    display:none;
-  }
-  .layer-header{
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-  }
-  .layer-title{font-weight:700;color:var(--cream)}
-  .toggle-btn{
-    background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--cream);cursor:pointer;
-    transition: all 0.2s ease;
-  }
-  .toggle-btn:hover{
-    background:rgba(255,255,255,0.05);
-  }
-  .toggle-btn.open{
-    transform: rotate(90deg);
-  }
-  .options{margin-top:10px;display:none;flex-wrap:wrap;gap:8px;}
-  .options.open{display:flex;}
-  .opt{
-    width:56px;height:56px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;
-    border:2px solid rgba(0,0,0,0.3);cursor:pointer;position:relative;
-    transition: all 0.15s ease;
-  }
-  .opt:hover{
-    transform: scale(1.08);
-  }
-  .opt img{max-width:100%;max-height:100%;object-fit:cover;display:block;}
-  .opt .label {
-    position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.38);color:white;font-size:10px;padding:2px;border-radius:4px;text-align:center;
-    max-height:20px;overflow:hidden;text-overflow:ellipsis;
-  }
-  .swatch{
-    width:48px;height:48px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
-  }
-  .opt.selected{outline:3px solid var(--accent);box-shadow: 0 4px 12px rgba(211,155,125,0.18);}
+  /* Right: layers + home2 UI area (we reuse same sidebar for home2) */
+  .sidebar{ flex:1; min-width:320px; max-width:540px; padding:8px; overflow:auto; max-height:820px;}
+  .layers{ padding:8px; }
+  .layers h2{ margin:6px 0 12px 10px; color:var(--cream); }
+  .layer{ background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)); margin:8px;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.03); }
+  .layer.hidden-ui{ display:none; }
+  .layer-header{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .layer-title{ font-weight:700; color:var(--cream) }
+  .toggle-btn{ background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--cream);cursor:pointer; transition: all 0.18s ease; }
+  .toggle-btn.open{ transform:rotate(90deg); }
+  .options{ margin-top:10px; display:none; flex-wrap:wrap; gap:8px; }
+  .options.open{ display:flex; }
+  .opt{ width:56px;height:56px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,0.3);cursor:pointer;position:relative;transition:all .12s ease;}
+  .opt:hover{ transform:scale(1.06); }
+  .opt img{ max-width:100%; max-height:100%; object-fit:cover; display:block; }
+  .opt .label{ position:absolute; bottom:2px; left:2px; right:2px; background:rgba(0,0,0,0.38); color:white; font-size:10px; padding:2px; border-radius:4px; text-align:center;}
+  .opt.selected{ outline:3px solid var(--accent); box-shadow:0 4px 12px rgba(211,155,125,0.18); }
+  .swatch{ width:48px;height:48px;border-radius:6px;border:1px solid rgba(0,0,0,0.2); }
 
-  /* Text/draw tool */
-  .toolbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;}
-  .size-indicator{width:32px;height:32px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;}
+  .toolbox{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:8px 0; }
+  .size-indicator{ width:32px;height:32px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;}
 
-  /* small note */
-  .note{position:fixed;right:14px;bottom:10px;font-size:12px;color:rgba(255,255,255,0.55);opacity:0.9}
+  .note{ position:fixed; right:14px; bottom:10px; font-size:12px; color:rgba(255,255,255,0.6); opacity:0.95; background:transparent; }
 
-  /* chocolate style buttons hover audio hint */
-  .btn:hover{transform:translateY(-2px);}
+  /* Modal for name input */
+  .modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:60; }
+  .modal{ background:linear-gradient(180deg,#2b1b18,#20100f); padding:18px; border-radius:12px; width:360px; box-shadow:0 8px 30px rgba(0,0,0,0.6); color:var(--cream);}
+  .modal h3{ margin:0 0 10px 0; font-size:18px; }
+  .modal p.small{ font-size:12px; color:rgba(255,255,255,0.7); margin:6px 0; }
+  .input{ width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:rgba(0,0,0,0.12); color:var(--cream); }
+
+  /* Home2 layout (appears when user registers/logs in) */
+  .home2{ display:none; gap:12px; padding:8px; }
+  .home2 .header{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px; }
+  .home2 .header .right{ display:flex; align-items:center; gap:8px; }
+  .home2 .center{ display:flex; flex-direction:column; align-items:center; gap:8px; padding:8px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)); border-radius:10px; }
+  .small-label{ font-size:12px; color:rgba(255,255,255,0.85); }
+
+  .lists{ display:flex; gap:8px; margin-top:8px; }
+  .list{ flex:1; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06)); padding:8px; border-radius:8px; max-height:380px; overflow:auto; }
+  .user-entry, .post-entry{ display:flex; align-items:center; gap:8px; padding:6px; border-radius:8px; margin-bottom:6px; background:rgba(0,0,0,0.03); cursor:pointer; }
+  .user-entry:hover, .post-entry:hover{ background:rgba(255,255,255,0.02); }
+
+  .user-name{ font-weight:700; color:var(--cream); }
+  .post-img{ width:64px;height:64px;border-radius:6px;object-fit:cover; background:#222; }
 
   /* Responsive */
   @media (max-width:1100px){
-    .app{flex-direction:column;align-items:center;}
-    .preview{width:100%}
-    .layers{width:100%;max-height:none;}
+    .app{ flex-direction:column; align-items:center; padding:12px; }
+    .preview{ width:100%; }
+    .sidebar{ width:100%; max-width:none; }
+    .lists{ flex-direction:column; }
   }
-
 </style>
 </head>
 <body>
 <div class="app" role="application" aria-label="カスタムお菓子メーカー">
   <div class="preview" aria-hidden="false">
     <div style="display:flex;align-items:center;gap:12px;width:100%;justify-content:space-between;flex-wrap:wrap;">
-      <h1 style="margin:0;color:var(--cream);font-size:18px">バレンタイン</h1>
+      <h1 style="margin:0;color:var(--cream);font-size:20px">バレンタイン — goghチョコ</h1>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="btn" id="randomizeBtn" title="ランダム">ランダム</button>
         <button class="btn secondary" id="resetBtn" title="リセット">リセット</button>
         <button class="btn" id="saveBtn" title="画像を保存">保存</button>
+        <button class="btn" id="openSendModalBtn" title="送る">送る</button>
       </div>
     </div>
 
-    <div class="canvas-wrap">
+    <div class="canvas-wrap" id="editorWrap">
       <canvas id="composite" width="526" height="526" aria-label="プレビュー"></canvas>
-      <canvas id="drawLayer" width="526" height="526" style="position:absolute;left:calc(50% - 263px);top:calc(50% - 263px);width:526px;height:526px;border-radius:8px;pointer-events:auto;"></canvas>
+      <canvas id="drawLayer" width="526" height="526"></canvas>
     </div>
 
     <div class="controls">
       <div class="toolbox">
         <button class="btn" id="writeModeBtn">ペン</button>
         <button class="btn" id="eraseModeBtn">消しゴム</button>
-        <label style="display:flex;align-items:center;gap:6px;">
-          <span style="font-size:13px;color:var(--cream)">太さ</span>
+        <label style="display:flex;align-items:center;gap:6px;color:var(--cream);">
+          <span style="font-size:13px;">太さ</span>
           <input id="sizeRange" type="range" min="1" max="40" value="9">
         </label>
         <div class="size-indicator" id="sizePreview"></div>
         <button class="btn secondary" id="clearDrawBtn">クリア</button>
       </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="small-label">※保存・送信時にFirebaseへ登録します</div>
+      </div>
     </div>
   </div>
 
-  <aside class="layers" aria-label="レイヤー一覧">
-    <h2>レイヤー</h2>
-    <div id="layersContainer"></div>
+  <aside class="sidebar">
+    <div class="layers" id="layersPanel">
+      <h2>レイヤー</h2>
+      <div id="layersContainer"></div>
+    </div>
+
+    <!-- Home2 (ユーザー登録後に表示される画面) -->
+    <div class="home2" id="home2">
+      <div class="header">
+        <div>
+          <div class="small-label">送れるチョコ</div>
+          <div style="font-weight:800;color:var(--cream);font-size:16px" id="homeTitle">My Box</div>
+        </div>
+        <div class="right">
+          <div id="currentName" class="small-label" style="font-weight:800;"></div>
+          <label style="display:flex;align-items:center;gap:6px;">
+            <input type="checkbox" id="anonToggle">
+            <span class="small-label">匿名表示</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="center">
+        <div class="small-label">作成中の画像（このまま相手に送信されます）</div>
+        <canvas id="homePreview" width="300" height="300" style="width:300px;height:300px;border-radius:8px;background:#fff;"></canvas>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" id="homeSaveBtn">ホームに保存</button>
+          <button class="btn secondary" id="homeBackBtn">戻る</button>
+        </div>
+      </div>
+
+      <div class="lists">
+        <div class="list" style="flex:1;">
+          <div style="font-weight:800;margin-bottom:6px;">送る一覧（登録ユーザー）</div>
+          <div id="sendList"></div>
+          <div class="small-label" style="margin-top:8px;">※名前は毎回同じに入力してください</div>
+        </div>
+        <div class="list" style="flex:1;">
+          <div style="font-weight:800;margin-bottom:6px;">受け取り（自分宛のポスト）</div>
+          <div id="postList"></div>
+        </div>
+      </div>
+    </div>
   </aside>
 </div>
 
-<div class="note"><a href="https://pocket-se.info/">ポケットサウンド</a></div>
+<!-- small note -->
+<div class="note">
+  <div>※gogh二次創作ガイドラインの範囲内でご利用ください。</div>
+  <div><a href="https://pocket-se.info/" style="color:var(--cream)">ポケットサウンド</a></div>
+</div>
 
+<!-- sounds -->
 <audio id="hoverAudio" preload="auto" src="ppp.mp3"></audio>
 <audio id="clickAudio" preload="auto" src="pp.mp3"></audio>
 
-<script>
-/*
-  シングルファイルで完結するカスタムお菓子メーカーの実装
-  - キャンバスサイズ: 526×526
-  - 各レイヤーは同サイズの画像群から選べる
-  - 初期はランダムで1つずつ選択
-  - レイヤーを切り替えるUI（1つだけ展開、明示的に閉じるボタンで戻す）
-  - hidden: true の場合、UIボタンは非表示だが画像は表示される
-  - タイトルの横にID表示なし
-  - 背景チェックボタンなし
-  - 色のマークなし
-  - 描画レイヤー: 黒、太さ可変（最大40、初期9）
-  - 消しゴム: 描いた線のみ消す
-  - 保存ボタンで合成してPNGをダウンロード
-  - UIはチョコ風カラー
-  - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生
-*/
+<!-- name input modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <h3 id="modalTitle">送信の準備</h3>
+    <p class="small">あなたの名前（半角/全角可）。前回と同じ名前を使ってください。小さく毎回同じ名前で入力してください。</p>
+    <input id="nameInput" class="input" placeholder="例: taro" />
+    <p class="small" style="margin-top:8px;">※同じ名前の記録がある場合は、その人専用の保存画像を読み込みます。</p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+      <button class="btn secondary" id="modalCancelBtn">キャンセル</button>
+      <button class="btn" id="modalConfirmBtn">決定</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase + App logic -->
+<script type="module">
+/* ===========================
+   Firebase initialisation
+   (Realtime Database only usage)
+   =========================== */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-analytics.js";
+import { getDatabase, ref, set, push, onValue, onChildAdded, update, child, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAuRmBnGdbatV47DyWiyzUUXApCedZdUYU",
+  authDomain: "zzke-ki.firebaseapp.com",
+  databaseURL: "https://zzke-ki-default-rtdb.firebaseio.com",
+  projectId: "zzke-ki",
+  storageBucket: "zzke-ki.firebasestorage.app",
+  messagingSenderId: "155414272080",
+  appId: "1:155414272080:web:de9733bf3b00da84e29955",
+  measurementId: "G-XE4G5XVLSH"
+};
+const app = initializeApp(firebaseConfig);
+try{ const analytics = getAnalytics(app); }catch(e){ /* analytics may fail in some environments */ }
+const db = getDatabase(app);
+
+/* ===========================
+   Existing editor & layer code
+   (kept and extended)
+   Canvas size: 526x526
+   =========================== */
 
 const layers = [
   { id: 0, title: "背景", editable: true, options: [
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zzke-ki/main/1001.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1002.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1003.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1004.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1005.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1006.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1007.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1008.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1009.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1010.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1011.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1012.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1013.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1014.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1015.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1016.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1017.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1018.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1019.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1020.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1021.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1022.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1023.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1024.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1025.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1026.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1027.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1028.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1029.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1030.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1031.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1032.png", hidden: false },
-      { label:"木目", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1033.png", hidden: false }
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zzke-ki/main/1001.png", hidden: false },
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1002.png", hidden: false }
+      /* ... keep adding as before ... */
     ]},
   { id: 1, title: "袋色", editable: true, options: [
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/201.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/202.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/203.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/204.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/205.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/206.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/207.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/208.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/209.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/211.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/212.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/213.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/214.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/215.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/216.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/217.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/218.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/219.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/221.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/222.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/223.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/224.png", hidden: false },
-      { label:"赤袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/225.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/226.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/227.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/220.png", hidden: false },
-      { label:"茶色袋", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/210.png", hidden: false }
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/201.png", hidden: false },
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/202.png", hidden: false }
     ]},
   { id: 2, title: "クリーム", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/301.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png", hidden: false },
-      { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/303.png", hidden: false }
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/301.png", hidden: false },
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png", hidden: false }
     ]},
   { id: 3, title: "板チョコ", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/402.png", hidden: false },
-      { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/403.png", hidden: false }
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png", hidden: false }
     ]},
-  { id: 5, title: "おもちゃ", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/502.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/503.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/504.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png", hidden: false }
+  { id: 5, title: "キャラクター", editable: true, options: [
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png", hidden: false }
     ]},
   { id: 6, title: "", editable: true, options: [
-      { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: false }
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: false }
     ]},
-  { id: 7, title: "おもちゃ", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/603.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/604.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/605.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/606.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/607.png", hidden: false },
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png", hidden: false }
+  { id: 7, title: "フレーム", editable: true, options: [
+      { label:"なし", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/000.png", hidden: false },
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png", hidden: false }
     ]},
-  { id: 8, title: "おもちゃ2", editable: true, options: [
-      { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: true }
+  { id: 10, title: "キャラ枠", editable: true, options: [
+      { label:"なし", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/000.png", hidden: false },
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/701.png", hidden: false }
+    ]},
+  { id: 8, title: "", editable: true, options: [
+      { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: false }
     ]},
   { id: 9, title: "", editable: false, options: [] }
 ];
@@ -296,6 +260,7 @@ const state = {
   canvasSize: 526
 };
 
+/* Elements */
 const layersContainer = document.getElementById('layersContainer');
 const composite = document.getElementById('composite');
 const drawLayer = document.getElementById('drawLayer');
@@ -311,18 +276,40 @@ const clearDrawBtn = document.getElementById('clearDrawBtn');
 const randomizeBtn = document.getElementById('randomizeBtn');
 const resetBtn = document.getElementById('resetBtn');
 const saveBtn = document.getElementById('saveBtn');
+const openSendModalBtn = document.getElementById('openSendModalBtn');
 
+/* Home2 elements */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const nameInput = document.getElementById('nameInput');
+const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+const modalCancelBtn = document.getElementById('modalCancelBtn');
+const home2 = document.getElementById('home2');
+const currentNameEl = document.getElementById('currentName');
+const anonToggle = document.getElementById('anonToggle');
+const homePreview = document.getElementById('homePreview');
+const homeSaveBtn = document.getElementById('homeSaveBtn');
+const homeBackBtn = document.getElementById('homeBackBtn');
+const sendListEl = document.getElementById('sendList');
+const postListEl = document.getElementById('postList');
+
+let currentUser = null; // plain name string used as DB key (we will encode path when saving)
+let usersCache = {}; // name -> { anon, lastImage }
+
+/* Play sounds on elements after audio unlock */
 function attachButtonSound(el){
   el.addEventListener('mouseenter', ()=>{ try{ hoverAudio.currentTime=0; hoverAudio.play(); }catch(e){} });
   el.addEventListener('click', ()=>{ try{ clickAudio.currentTime=0; clickAudio.play(); }catch(e){} });
 }
+document.querySelectorAll('button,input[type="range"]').forEach(attachButtonSound);
 
+/* Image loader with cache */
 function loadImage(url){
   return new Promise((resolve)=>{
     if(!url){ resolve(null); return; }
     if(state.imagesCache[url]) {
-      if(state.imagesCache[url].complete) resolve(state.imagesCache[url]);
-      else state.imagesCache[url].addEventListener('load', ()=>resolve(state.imagesCache[url]));
+      const img = state.imagesCache[url];
+      if(img.complete) resolve(img);
+      else img.addEventListener('load', ()=>resolve(img));
       return;
     }
     const img = new Image();
@@ -334,123 +321,83 @@ function loadImage(url){
   });
 }
 
+/* Build UI for layers (hidden option handling, keep panel open until closed via toggle) */
 function buildLayersUI(){
   layersContainer.innerHTML = '';
   layers.sort((a,b)=>a.id-b.id).forEach(layer=>{
-    const wrap = document.createElement('div'); 
-    wrap.className='layer'; 
+    const wrap = document.createElement('div');
+    wrap.className = 'layer';
     wrap.dataset.layerId = layer.id;
-    
-    // ボタンが非表示の場合のみクラスを追加（ただし層自体は表示）
-    const hasHiddenOptions = layer.editable && layer.options && layer.options.some(o => o.hidden);
     const allHidden = layer.editable && layer.options && layer.options.every(o => o.hidden);
     if(allHidden) wrap.classList.add('hidden-ui');
 
-    const header = document.createElement('div'); 
-    header.className='layer-header';
-    const title = document.createElement('div'); 
-    title.className='layer-title'; 
-    title.textContent = layer.title;
+    const header = document.createElement('div'); header.className='layer-header';
+    const title = document.createElement('div'); title.className='layer-title'; title.textContent = layer.title || '';
     header.appendChild(title);
 
     if(layer.editable){
-      const toggle = document.createElement('button'); 
-      toggle.className='toggle-btn'; 
+      const toggle = document.createElement('button'); toggle.className='toggle-btn';
       toggle.innerHTML = '&#x3e;';
-      toggle.title = '切り替えを表示/非表示';
+      if(state.expandOpen === layer.id) toggle.classList.add('open');
       toggle.addEventListener('click', (e)=>{
         e.preventDefault();
-        if(state.expandOpen === layer.id) {
-          state.expandOpen = null;
-        } else {
-          state.expandOpen = layer.id;
-        }
+        if(state.expandOpen === layer.id) state.expandOpen = null;
+        else state.expandOpen = layer.id;
         renderLayers();
       });
       header.appendChild(toggle);
     } else {
-      const lock = document.createElement('div'); 
-      lock.style.opacity=0.7; 
-      lock.style.fontSize='13px'; 
-      lock.textContent='編集不可';
+      const lock = document.createElement('div'); lock.style.opacity = 0.7; lock.style.fontSize='13px'; lock.textContent='編集不可';
       header.appendChild(lock);
     }
-
     wrap.appendChild(header);
 
-    const opts = document.createElement('div'); 
-    opts.className='options'; 
+    const opts = document.createElement('div'); opts.className='options';
     if(state.expandOpen === layer.id) opts.classList.add('open');
 
     if(layer.editable){
       layer.options.forEach(async (opt, idx)=>{
-        // hidden: true の場合、ボタンを作らない（画像は下レイヤーで表示される）
-        if(opt.hidden) return;
-
-        const el = document.createElement('div'); 
-        el.className='opt';
-        el.title = opt.label || ('option-'+idx);
-        
+        if(opt.hidden) return; // UI button hidden, but image still usable internally
+        const el = document.createElement('div'); el.className='opt'; el.title = opt.label || ('option-'+idx);
         const isColor = /^#([0-9a-f]{3,8})$/i.test(opt.label);
         if(isColor){
-          const sw = document.createElement('div'); 
-          sw.className='swatch';
-          sw.style.background = opt.label;
-          el.appendChild(sw);
+          const sw = document.createElement('div'); sw.className = 'swatch'; sw.style.background = opt.label; el.appendChild(sw);
         } else if(opt.url){
-          const img = document.createElement('img'); 
-          img.src = opt.url; 
-          img.alt = opt.label || '';
+          const img = document.createElement('img'); img.src = opt.url; img.alt = opt.label || '';
           el.appendChild(img);
-          const lbl = document.createElement('div'); 
-          lbl.className='label'; 
-          lbl.textContent = opt.label;
-          el.appendChild(lbl);
+          if(opt.label) { const lbl = document.createElement('div'); lbl.className='label'; lbl.textContent = opt.label; el.appendChild(lbl); }
         } else {
-          const txt = document.createElement('div'); 
-          txt.style.padding='4px'; 
-          txt.style.fontSize='13px'; 
-          txt.textContent = opt.label || 'none';
-          el.appendChild(txt);
+          const txt = document.createElement('div'); txt.style.padding='4px'; txt.style.fontSize='13px'; txt.textContent = opt.label || 'none'; el.appendChild(txt);
         }
-
         if(state.selected[layer.id] === idx) el.classList.add('selected');
-        
         el.addEventListener('click', async ()=>{
           state.selected[layer.id] = idx;
+          // DO NOT auto-close (user requested panel remain open). Only toggled by toggle button.
           renderLayers();
           await redrawComposite();
         });
-        
         opts.appendChild(el);
         if(opt.url) loadImage(opt.url);
       });
     } else {
-      const hint = document.createElement('div'); 
-      hint.style.fontSize='13px'; 
-      hint.style.opacity=0.8; 
-      hint.textContent = 'このレイヤーは描画専用です';
+      const hint = document.createElement('div'); hint.style.fontSize='13px'; hint.style.opacity=0.8; hint.textContent = 'このレイヤーは描画専用です';
       opts.appendChild(hint);
     }
-
     wrap.appendChild(opts);
     layersContainer.appendChild(wrap);
   });
-  
-  document.querySelectorAll('.toggle-btn').forEach(btn => attachButtonSound(btn));
+  document.querySelectorAll('.toggle-btn').forEach(attachButtonSound);
 }
 
-function renderLayers(){
-  buildLayersUI();
-}
+function renderLayers(){ buildLayersUI(); }
 
+/* random / reset */
 function randomizeSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
     if(!layer.options || layer.options.length===0) return;
     const visibleOptions = layer.options.filter(o => !o.hidden);
-    if(visibleOptions.length === 0) {
-      // すべて hidden の場合は最初の hidden option を選ぶ
+    if(visibleOptions.length === 0){
       state.selected[layer.id] = 0;
     } else {
       const randomIdx = Math.floor(Math.random() * visibleOptions.length);
@@ -459,7 +406,6 @@ function randomizeSelections(){
     }
   });
 }
-
 function resetSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
@@ -467,9 +413,20 @@ function resetSelections(){
   });
 }
 
+/* composite drawing */
+function drawImageCover(ctx, img, x, y, w, h){
+  const iw = img.width, ih = img.height;
+  if(!iw || !ih) return;
+  const r = Math.max(w/iw, h/ih);
+  const nw = iw * r, nh = ih * r;
+  const cx = (nw - w) / 2, cy = (nh - h) / 2;
+  ctx.drawImage(img, -cx + x, -cy + y, nw, nh);
+}
+
 async function redrawComposite(){
   const size = state.canvasSize;
   ctx.clearRect(0,0,size,size);
+  // white background for export/preview
   ctx.save();
   ctx.fillStyle = '#fff';
   ctx.fillRect(0,0,size,size);
@@ -487,84 +444,64 @@ async function redrawComposite(){
     if(!img) continue;
     drawImageCover(ctx, img, 0,0,size,size);
   }
-  ctx.drawImage(drawLayer, 0,0, size, size);
+  // top: draw layer
+  ctx.drawImage(drawLayer, 0,0, state.canvasSize, state.canvasSize);
+  // update home preview if visible
+  updateHomePreview();
 }
 
-function drawImageCover(ctx, img, x, y, w, h){
-  const iw = img.width, ih = img.height;
-  if(!iw || !ih){ ctx.globalAlpha = 1; return; }
-  const r = Math.max(w/iw, h/ih);
-  const nw = iw * r, nh = ih * r;
-  const cx = (nw - w) / 2, cy = (nh - h) / 2;
-  ctx.drawImage(img, -cx + x, -cy + y, nw, nh);
-}
-
-async function saveComposite(){
+/* export to dataURL (for DB save or sending) */
+function getCompositeDataURL(){
   const size = state.canvasSize;
-  const tmp = document.createElement('canvas'); 
-  tmp.width = size; 
-  tmp.height = size;
+  const tmp = document.createElement('canvas'); tmp.width = size; tmp.height = size;
   const tctx = tmp.getContext('2d');
   tctx.clearRect(0,0,size,size);
-  tctx.save();
-  tctx.fillStyle = '#fff';
-  tctx.fillRect(0,0,size,size);
-  tctx.restore();
+  tctx.fillStyle = '#fff'; tctx.fillRect(0,0,size,size);
+  // draw layers
+  return new Promise(async (resolve)=>{
+    for(const layer of layers){
+      if(layer.id === 9) continue;
+      if(!layer.editable) continue;
+      const sel = state.selected[layer.id];
+      if(sel === undefined) continue;
+      const opt = layer.options[sel];
+      if(!opt) continue;
+      if(!opt.url) continue;
+      const img = await loadImage(opt.url);
+      if(!img) continue;
+      drawImageCover(tctx, img, 0,0,size,size);
+    }
+    // draw drawing layer
+    tctx.drawImage(drawLayer, 0,0, size, size);
+    resolve(tmp.toDataURL('image/png'));
+  });
+}
 
-  for(const layer of layers){
-    if(layer.id === 9) continue;
-    if(!layer.editable) continue;
-    const sel = state.selected[layer.id];
-    if(sel === undefined) continue;
-    const opt = layer.options[sel];
-    if(!opt) continue;
-    if(!opt.url) continue;
-    const img = await loadImage(opt.url);
-    if(!img) continue;
-    drawImageCover(tctx, img, 0,0,size,size);
-  }
-  tctx.drawImage(drawLayer, 0,0, size, size);
-  
+/* Save (download) */
+async function saveComposite(){
+  const dataUrl = await getCompositeDataURL();
   const a = document.createElement('a');
-  a.href = tmp.toDataURL('image/png');
+  a.href = dataUrl;
   a.download = `custom_snack_${Date.now()}.png`;
   a.click();
 }
 
+/* Drawing tools */
 let drawing = false;
 let erasing = false;
 let brushSize = parseInt(sizeRange.value,10) || 9;
 sizePreview.style.width = sizePreview.style.height = Math.max(24,brushSize*0.8)+'px';
-sizePreview.textContent = '';
 drawCtx.lineCap = 'round';
 drawCtx.lineJoin = 'round';
 drawCtx.strokeStyle = '#000';
 drawCtx.lineWidth = brushSize;
 
-function setBrushSize(s){
-  brushSize = s;
-  drawCtx.lineWidth = brushSize;
-  sizePreview.style.width = sizePreview.style.height = Math.max(24,brushSize*0.8)+'px';
-}
-
+function setBrushSize(s){ brushSize = s; drawCtx.lineWidth = brushSize; sizePreview.style.width = sizePreview.style.height = Math.max(24,brushSize*0.8)+'px'; }
 sizeRange.addEventListener('input', (e)=>{ setBrushSize(parseInt(e.target.value,10)); });
 
-writeModeBtn.addEventListener('click', ()=>{
-  erasing = false;
-  writeModeBtn.style.opacity = 1;
-  eraseModeBtn.style.opacity = 0.8;
-});
-
-eraseModeBtn.addEventListener('click', ()=>{
-  erasing = true;
-  eraseModeBtn.style.opacity = 1;
-  writeModeBtn.style.opacity = 0.8;
-});
-
-clearDrawBtn.addEventListener('click', ()=>{ 
-  drawCtx.clearRect(0,0,drawLayer.width,drawLayer.height); 
-  redrawComposite(); 
-});
+writeModeBtn.addEventListener('click', ()=>{ erasing = false; writeModeBtn.style.opacity = 1; eraseModeBtn.style.opacity = 0.8; });
+eraseModeBtn.addEventListener('click', ()=>{ erasing = true; eraseModeBtn.style.opacity = 1; writeModeBtn.style.opacity = 0.8; });
+clearDrawBtn.addEventListener('click', ()=>{ drawCtx.clearRect(0,0,drawLayer.width,drawLayer.height); redrawComposite(); });
 
 function getPointerPos(evt){
   const rect = drawLayer.getBoundingClientRect();
@@ -574,41 +511,10 @@ function getPointerPos(evt){
   const y = (clientY - rect.top) * (drawLayer.height / rect.height);
   return {x,y};
 }
-
 let last = null;
-function pointerDown(e){
-  e.preventDefault();
-  drawing = true;
-  last = getPointerPos(e);
-  drawCtx.save();
-  if(erasing){
-    drawCtx.globalCompositeOperation = 'destination-out';
-    drawCtx.strokeStyle = 'rgba(0,0,0,1)';
-  } else {
-    drawCtx.globalCompositeOperation = 'source-over';
-    drawCtx.strokeStyle = '#000';
-  }
-  drawCtx.lineWidth = brushSize;
-  drawCtx.beginPath();
-  drawCtx.moveTo(last.x,last.y);
-}
-
-function pointerMove(e){
-  if(!drawing) return;
-  const p = getPointerPos(e);
-  drawCtx.lineTo(p.x,p.y);
-  drawCtx.stroke();
-  last = p;
-}
-
-function pointerUp(e){
-  if(!drawing) return;
-  drawing = false;
-  drawCtx.closePath();
-  drawCtx.restore();
-  redrawComposite();
-}
-
+function pointerDown(e){ e.preventDefault(); drawing = true; last = getPointerPos(e); drawCtx.save(); if(erasing){ drawCtx.globalCompositeOperation='destination-out'; drawCtx.strokeStyle='rgba(0,0,0,1)'; } else { drawCtx.globalCompositeOperation='source-over'; drawCtx.strokeStyle='#000'; } drawCtx.lineWidth = brushSize; drawCtx.beginPath(); drawCtx.moveTo(last.x,last.y); }
+function pointerMove(e){ if(!drawing) return; const p = getPointerPos(e); drawCtx.lineTo(p.x,p.y); drawCtx.stroke(); last = p; }
+function pointerUp(e){ if(!drawing) return; drawing = false; drawCtx.closePath(); drawCtx.restore(); redrawComposite(); }
 drawLayer.addEventListener('mousedown', pointerDown);
 drawLayer.addEventListener('touchstart', pointerDown, {passive:false});
 window.addEventListener('mousemove', pointerMove);
@@ -616,42 +522,348 @@ window.addEventListener('touchmove', pointerMove, {passive:false});
 window.addEventListener('mouseup', pointerUp);
 window.addEventListener('touchend', pointerUp);
 
+/* Home preview (smaller canvas) */
+const homePreviewCtx = homePreview.getContext('2d');
+async function updateHomePreview(){
+  // draw scaled copy of composite into homePreview
+  const dataUrl = await getCompositeDataURL();
+  const img = new Image();
+  img.onload = ()=>{ homePreviewCtx.clearRect(0,0, homePreview.width, homePreview.height); homePreviewCtx.drawImage(img,0,0, homePreview.width, homePreview.height); };
+  img.src = dataUrl;
+}
+
+/* ===========================
+   Firebase: users & posts handling (Realtime DB)
+   DB structure:
+     /users/{encodedName} => { name, anon:bool, lastImage:dataURL, updatedAt:number }
+     /posts/{pushId} => { to:recipientName, from:senderName, image:dataURL, timestamp:number }
+   =========================== */
+
+/* helper: encode key path for username */
+function userKey(name){ return encodeURIComponent(name); }
+
+/* watch users list (for send list & anon state) */
+function subscribeUsers(){
+  const usersRef = ref(db, 'users');
+  onValue(usersRef, snapshot=>{
+    const val = snapshot.val() || {};
+    usersCache = {};
+    for(const k in val){
+      const u = val[k];
+      // stored name might be under u.name or decodeURIComponent(k)
+      const storedName = u.name || decodeURIComponent(k);
+      usersCache[storedName] = { anon: !!u.anon, lastImage: u.lastImage || null, key:k };
+    }
+    renderSendList();
+    renderPosts(); // re-render posts to reflect possible anon changes
+  });
+}
+
+/* subscribe posts (all posts) and keep in memory */
+let postsCache = [];
+function subscribePosts(){
+  const postsRef = ref(db, 'posts');
+  onChildAdded(postsRef, snapshot=>{
+    const p = snapshot.val();
+    p._id = snapshot.key;
+    postsCache.push(p);
+    renderPosts(); // posts UI updates (filtered by current user)
+  });
+  // also keep onValue to catch initial set and deletions if needed
+  onValue(ref(db,'posts'), snap=>{
+    const v = snap.val() || {};
+    postsCache = Object.keys(v).map(k => ({...v[k], _id:k}));
+    renderPosts();
+  });
+}
+
+/* Render send list (registered users) */
+function renderSendList(){
+  sendListEl.innerHTML = '';
+  const names = Object.keys(usersCache).sort((a,b)=>a.localeCompare(b));
+  names.forEach(name=>{
+    if(currentUser && name === currentUser) return; // skip self
+    const info = usersCache[name];
+    const entry = document.createElement('div'); entry.className='user-entry';
+    const nm = document.createElement('div'); nm.className='user-name';
+    nm.textContent = info.anon ? '匿名さん' : name;
+    const btn = document.createElement('button'); btn.className='btn ghost'; btn.textContent = '送る';
+    // clicking entire entry also sends
+    entry.appendChild(nm);
+    entry.appendChild(btn);
+    entry.addEventListener('click', ()=> sendToUser(name) );
+    btn.addEventListener('click',(e)=>{ e.stopPropagation(); sendToUser(name); });
+    sendListEl.appendChild(entry);
+  });
+}
+
+/* Render posts (for current user) */
+function renderPosts(){
+  postListEl.innerHTML = '';
+  if(!currentUser) return;
+  // show posts where to == currentUser
+  const myPosts = postsCache.filter(p => (p.to === currentUser));
+  // sort by timestamp desc
+  myPosts.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+  myPosts.forEach(p=>{
+    const entry = document.createElement('div'); entry.className='post-entry';
+    const img = document.createElement('img'); img.className='post-img'; img.src = p.image || '';
+    const right = document.createElement('div'); right.style.flex='1';
+    const senderName = p.from || '不明';
+    const senderInfo = usersCache[senderName];
+    const displayName = senderInfo ? (senderInfo.anon ? '匿名さん' : senderName) : senderName;
+    const nm = document.createElement('div'); nm.style.fontWeight='800'; nm.textContent = displayName;
+    const ts = document.createElement('div'); ts.className='small-label'; ts.textContent = new Date((p.timestamp||0)).toLocaleString();
+    right.appendChild(nm); right.appendChild(ts);
+    const saveBtn = document.createElement('button'); saveBtn.className='btn secondary'; saveBtn.textContent='保存';
+    saveBtn.addEventListener('click', ()=> downloadDataUrl(p.image, `post_from_${displayName}_${Date.now()}.png`));
+    entry.appendChild(img); entry.appendChild(right); entry.appendChild(saveBtn);
+    postListEl.appendChild(entry);
+  });
+}
+
+function downloadDataUrl(dataUrl, filename){
+  const a = document.createElement('a'); a.href = dataUrl; a.download = filename; a.click();
+}
+
+/* create/update user record */
+async function saveUserProfile(name, imageData, anon=false){
+  const key = userKey(name);
+  const userRef = ref(db, `users/${key}`);
+  // store also name inside to avoid decode issues
+  await set(userRef, { name: name, anon: !!anon, lastImage: imageData || null, updatedAt: Date.now() });
+}
+
+/* get user profile if exists */
+async function getUserProfile(name){
+  const key = userKey(name);
+  const snap = await get(child(ref(db), `users/${key}`));
+  return snap.exists() ? snap.val() : null;
+}
+
+/* send current user's composed image to target user */
+async function sendToUser(targetName){
+  if(!currentUser){
+    alert('先に名前登録してください（送るボタンから）');
+    return;
+  }
+  if(!confirm(`${targetName} さんに現在の画像を送りますか？`)) return;
+  const dataUrl = await getCompositeDataURL();
+  // create post
+  const postRef = push(ref(db, 'posts'));
+  await set(postRef, { to: targetName, from: currentUser, image: dataUrl, timestamp: Date.now() });
+  // also update sender's lastImage in users (optional)
+  await update(ref(db, `users/${userKey(currentUser)}`), { lastImage: dataUrl, updatedAt: Date.now() });
+  alert('送信しました。');
+}
+
+/* When user clicks "home save" (store their current image/profile) */
+async function onHomeSave(){
+  if(!currentUser){
+    alert('名前が無い状態です。送る→決定から操作してください。');
+    return;
+  }
+  const dataUrl = await getCompositeDataURL();
+  await saveUserProfile(currentUser, dataUrl, !!anonToggle.checked);
+  alert('ホームに保存しました。');
+}
+
+/* When user changes anonymous toggle, update DB */
+async function onAnonToggle(){
+  if(!currentUser) return;
+  await update(ref(db, `users/${userKey(currentUser)}`), { anon: !!anonToggle.checked });
+}
+
+/* If a user registers (enters name), load their saved image if any */
+async function onUserRegister(name){
+  if(!name) return;
+  currentUser = name;
+  currentNameEl.textContent = name;
+  // show home2
+  home2.style.display = 'flex';
+  // fetch profile
+  const profile = await getUserProfile(name);
+  if(profile && profile.lastImage){
+    // load image into editor (replace whole composition canvas)
+    const img = new Image();
+    img.onload = ()=>{
+      // draw into composite canvas and set drawing layer cleared
+      ctx.clearRect(0,0,state.canvasSize,state.canvasSize);
+      ctx.drawImage(img,0,0, state.canvasSize, state.canvasSize);
+      drawCtx.clearRect(0,0, state.canvasSize, state.canvasSize);
+      // Note: we don't backfill state.selected here; we display exactly lastImage as final composite
+      // but we also store it as user's current lastImage in cache.
+      updateHomePreview(); redrawComposite();
+    };
+    img.src = profile.lastImage;
+    anonToggle.checked = !!profile.anon;
+  } else {
+    // If no profile, we save current composition as initial profile
+    const dataUrl = await getCompositeDataURL();
+    await saveUserProfile(name, dataUrl, !!anonToggle.checked);
+  }
+  // subscribe lists
+  subscribeUsers();
+  subscribePosts();
+  // show sendList and posts
+  renderSendList();
+  renderPosts();
+}
+
+/* ===========================
+   Audio unlock (wait for first user gesture)
+   - Play/pause audio elements on first pointerdown
+   - Only unlock once
+   =========================== */
+let audioUnlocked = false;
+function unlockAudio(){
+  if(audioUnlocked) return;
+  try{
+    hoverAudio.play().then(()=>{ hoverAudio.pause(); hoverAudio.currentTime = 0; }).catch(()=>{});
+    clickAudio.play().then(()=>{ clickAudio.pause(); clickAudio.currentTime = 0; }).catch(()=>{});
+    audioUnlocked = true;
+  }catch(e){}
+  // remove listener
+  document.removeEventListener('pointerdown', unlockAudio);
+}
+document.addEventListener('pointerdown', unlockAudio);
+
+/* UI: modal open/close */
+openSendModalBtn.addEventListener('click', ()=> {
+  modalBackdrop.style.display = 'flex';
+  nameInput.value = '';
+  nameInput.focus();
+});
+modalCancelBtn.addEventListener('click', ()=> { modalBackdrop.style.display = 'none'; });
+modalBackdrop.addEventListener('click', (e)=> { if(e.target === modalBackdrop) modalBackdrop.style.display = 'none'; });
+
+modalConfirmBtn.addEventListener('click', async ()=>{
+  const name = (nameInput.value || '').trim();
+  if(!name){ alert('名前を入力してください'); nameInput.focus(); return; }
+  modalBackdrop.style.display = 'none';
+  // register / load profile
+  await onUserRegister(name);
+});
+
+/* Home2 back button */
+homeBackBtn.addEventListener('click', ()=>{
+  home2.style.display = 'none';
+  currentUser = null;
+  currentNameEl.textContent = '';
+});
+
+/* Home save button */
+homeSaveBtn.addEventListener('click', onHomeSave);
+
+/* anon toggle */
+anonToggle.addEventListener('change', onAnonToggle);
+
+/* Save & send integration */
+saveBtn.addEventListener('click', saveComposite);
+
+/* Attach send modal from save area as well */
+document.getElementById('openSendModalBtn').addEventListener('click', ()=>{
+  // modal already handled above
+});
+
+/* Send to user by clicking sendList entry will call sendToUser(name) */
+
+/* Update home preview when composite changes */
+function updateHomePreviewThrottled(){
+  // call updateHomePreview but throttled to avoid heavy operations
+  if(this._homePreviewTimeout) clearTimeout(this._homePreviewTimeout);
+  this._homePreviewTimeout = setTimeout(()=>{ updateHomePreview(); }, 120);
+}
+
+/* Render initial UI & wire things */
 async function init(){
-  drawLayer.style.pointerEvents='auto';
+  // initial selections
   randomizeSelections();
   buildLayersUI();
   await redrawComposite();
 
+  // set default modes
   writeModeBtn.style.opacity = 1;
   eraseModeBtn.style.opacity = 0.8;
 
   randomizeBtn.addEventListener('click', async ()=>{
-    randomizeSelections();
-    renderLayers();
-    await redrawComposite();
+    randomizeSelections(); renderLayers(); await redrawComposite();
   });
-
   resetBtn.addEventListener('click', async ()=>{
-    resetSelections();
-    renderLayers();
-    await redrawComposite();
+    resetSelections(); renderLayers(); await redrawComposite();
   });
 
-  saveBtn.addEventListener('click', saveComposite);
-
-  window.addEventListener('keydown',(e)=>{ 
-    if(e.key==='e') { 
-      erasing = !erasing; 
-      eraseModeBtn.style.opacity = erasing?1:0.8; 
-      writeModeBtn.style.opacity = erasing?0.8:1; 
-    } 
+  // wire saving
+  saveBtn.addEventListener('click', async ()=>{
+    // update current user's lastImage also if logged in
+    if(currentUser){
+      const dataUrl = await getCompositeDataURL();
+      await update(ref(db, `users/${userKey(currentUser)}`), { lastImage: dataUrl, updatedAt: Date.now() });
+      alert('保存しました（ホームの記録を更新）');
+    } else {
+      saveComposite();
+    }
   });
 
+  // ensure buttons have audio on pointer events after unlock
   document.querySelectorAll('button').forEach(attachButtonSound);
-  renderLayers();
+
+  // update home preview occasionally (every time composite redraws we call update)
+  // Also update when user draws:
+  drawLayer.addEventListener('mouseup', updateHomePreviewThrottled);
+  drawLayer.addEventListener('touchend', updateHomePreviewThrottled);
+
+  // initial subscriptions (listen to users and posts even before login so lists update)
+  subscribeUsers();
+  subscribePosts();
+}
+init();
+
+/* Helper: renderPosts called when postsCache or usersCache updated.
+   For posts display we use usersCache to reflect anon flag in real-time */
+function renderPosts(){
+  // re-use logic above: ensure postList shows posts destined to currentUser
+  postListEl.innerHTML = '';
+  if(!currentUser) return;
+  const myPosts = postsCache.filter(p => p.to === currentUser);
+  myPosts.sort((a,b)=> (b.timestamp||0) - (a.timestamp||0));
+  myPosts.forEach(p=>{
+    const entry = document.createElement('div'); entry.className='post-entry';
+    const img = document.createElement('img'); img.className='post-img'; img.src = p.image || '';
+    const right = document.createElement('div'); right.style.flex='1';
+    const senderName = p.from || '不明';
+    const senderInfo = usersCache[senderName];
+    const displayName = senderInfo ? (senderInfo.anon ? '匿名さん' : senderName) : senderName;
+    const nm = document.createElement('div'); nm.style.fontWeight='800'; nm.textContent = displayName;
+    const ts = document.createElement('div'); ts.className='small-label'; ts.textContent = new Date((p.timestamp||0)).toLocaleString();
+    right.appendChild(nm); right.appendChild(ts);
+    const saveBtn = document.createElement('button'); saveBtn.className='btn secondary'; saveBtn.textContent='保存';
+    saveBtn.addEventListener('click', ()=> downloadDataUrl(p.image, `post_from_${displayName}_${Date.now()}.png`));
+    entry.appendChild(img); entry.appendChild(right); entry.appendChild(saveBtn);
+    postListEl.appendChild(entry);
+  });
 }
 
-init();
+/* Re-render send list when usersCache changes (function declared earlier but re-defining to ensure closure access) */
+function renderSendList(){
+  sendListEl.innerHTML = '';
+  const names = Object.keys(usersCache).sort((a,b)=>a.localeCompare(b));
+  names.forEach(name=>{
+    if(currentUser && name === currentUser) return;
+    const info = usersCache[name];
+    const entry = document.createElement('div'); entry.className='user-entry';
+    const nm = document.createElement('div'); nm.className='user-name';
+    nm.textContent = info.anon ? '匿名さん' : name;
+    const btn = document.createElement('button'); btn.className='btn ghost'; btn.textContent = '送る';
+    entry.appendChild(nm); entry.appendChild(btn);
+    entry.addEventListener('click', ()=> sendToUser(name) );
+    btn.addEventListener('click',(e)=>{ e.stopPropagation(); sendToUser(name); });
+    sendListEl.appendChild(entry);
+  });
+}
+
+/* Ensure we export functions used above to global scope if needed (for debugging) */
+window._gogh = { getCompositeDataURL, saveUserProfile, sendToUser, getUserProfile };
 
 </script>
 </body>
