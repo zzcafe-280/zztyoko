@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>goghチョコ）</title>
+<title>goghチョコ</title>
 <style>
   :root{
     --choco-1:#4b2e2a;
@@ -90,7 +90,7 @@
         <button class="btn" id="randomizeBtn" title="ランダム">ランダム</button>
         <button class="btn secondary" id="resetBtn" title="リセット">リセット</button>
         <button class="btn" id="saveBtn" title="画像を保存">保存</button>
-        <button class="btn" id="openSendModalBtn" title="送る">送る</button>
+        <button class="btn" id="openSendModalBtn" title="送る">送る・受け取る</button>
       </div>
     </div>
 
@@ -126,8 +126,8 @@
     <div class="home2" id="home2">
       <div class="header">
         <div>
-          <div class="small-label">送れるチョコ</div>
-          <div style="font-weight:800;color:var(--cream);font-size:16px" id="homeTitle">My Box</div>
+          <div class="small-label"></div>
+          <div style="font-weight:800;color:var(--cream);font-size:16px" id="homeTitle"></div>
         </div>
         <div class="right">
           <div id="currentName" class="small-label" style="font-weight:800;"></div>
@@ -139,8 +139,8 @@
       </div>
 
       <div class="center">
-        <div class="small-label">作成中の画像（このまま相手に送信されます）</div>
-        <canvas id="homePreview" width="300" height="300" style="width:300px;height:300px;border-radius:8px;background:#fff;"></canvas>
+        <div class="small-label"></div>
+        <canvas id="homePreview" width="300" height="300" style="width:300px;height:300px;border-radius:8px;background:#fff;">送れるチョコ</canvas>
         <div style="display:flex;gap:8px;">
           <button class="btn" id="homeSaveBtn">ホームに保存</button>
           <button class="btn secondary" id="homeBackBtn">戻る</button>
@@ -149,9 +149,9 @@
 
       <div class="lists">
         <div class="list" style="flex:1;">
-          <div style="font-weight:800;margin-bottom:6px;">登録ユーザー</div>
+          <div style="font-weight:800;margin-bottom:6px;">ユーザ一覧</div>
           <div id="sendList"></div>
-          <div class="small-label" style="margin-top:8px;">※名前は毎回同じで</div>
+          <div class="small-label" style="margin-top:8px;">※自分のは見えません</div>
         </div>
         <div class="list" style="flex:1;">
           <div style="font-weight:800;margin-bottom:6px;">受け取り</div>
@@ -217,7 +217,7 @@ const db = getDatabase(app);
    =========================== */
 
 const layers = [
-  { id: 0, title: "背景", editable: true, options: [
+  { id: 0, title: "🟩背景", editable: true, options: [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zzke-ki/main/1001.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1002.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/1003.png", hidden: false },
@@ -281,17 +281,17 @@ const layers = [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/220.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/210.png", hidden: false }
     ]},
-  { id: 2, title: "クリーム", editable: true, options: [
+  { id: 2, title: "🍫板チョコ", editable: true, options: [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/301.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/303.png", hidden: false }
     ]},
-  { id: 3, title: "板チョコ", editable: true, options: [
+  { id: 3, title: "🍦クリーム", editable: true, options: [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/402.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/403.png", hidden: false }
     ]},
-  { id: 5, title: "キャラクター", editable: true, options: [
+  { id: 5, title: "🦈キャラクター", editable: true, options: [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/502.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/503.png", hidden: false },
@@ -299,10 +299,10 @@ const layers = [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png", hidden: false }
     ]},
-  { id: 6, title: "", editable: true, options: [
+  { id: 6, title: "-", editable: true, options: [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: false }
     ]},
-  { id: 7, title: "フレーム", editable: true, options: [
+  { id: 7, title: "🖼️フレーム", editable: true, options: [
             { label:"なし", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/000.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png", hidden: false },
@@ -314,17 +314,17 @@ const layers = [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png", hidden: false }
     ]},
 
-  { id: 10, title: "キャラ枠", editable: true, options: [
+  { id: 10, title: "👨‍🎨キャラ枠", editable: true, options: [
             { label:"なし", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/000.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/701.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/702.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/703.png", hidden: false },
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/704.png", hidden: false }
    ]},
-  { id: 8, title: "", editable: true, options: [
+  { id: 8, title: "-", editable: true, options: [
       { label:"", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: false }
     ]},
-  { id: 9, title: "", editable: false, options: [] }
+  { id: 9, title: "-", editable: false, options: [] }
 ];
 
 
