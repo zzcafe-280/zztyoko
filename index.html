@@ -1,7 +1,3 @@
-
-
-
-
 <!doctype html>
 <html lang="ja">
 <head>
@@ -33,8 +29,8 @@
     align-items:center;
   }
   .canvas-wrap{
-    width:300px;
-    height:300px;
+    width:550px;
+    height:550px;
     background:linear-gradient(180deg,#2a1b17 0%, #1a0f0d 100%);
     border-radius:14px;
     padding:12px;
@@ -42,14 +38,15 @@
     display:flex;align-items:center;justify-content:center;position:relative;
   }
   canvas#composite{
-    width:288px;height:288px;background:#fff;border-radius:8px;display:block;
+    width:526px;height:526px;background:#fff;border-radius:8px;display:block;
     image-rendering: crisp-edges;
     box-shadow: 0 6px 18px rgba(0,0,0,0.6);
   }
   /* Controls under preview */
   .controls{
     width:100%;
-    display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+    display:flex;gap:8px;align-items:center;justify-content:space-between;
+    flex-wrap:wrap;
   }
   .btn{
     background:linear-gradient(180deg,var(--choco-2),var(--choco-1));
@@ -57,6 +54,7 @@
     border:none;padding:10px 14px;border-radius:10px;cursor:pointer;
     box-shadow: 0 4px 8px rgba(0,0,0,0.5);
     font-weight:600;
+    font-size:14px;
   }
   .btn.secondary{
     background: linear-gradient(180deg,var(--cream),#f0e7db);
@@ -67,6 +65,7 @@
   /* Right: layers list */
   .layers{
     flex:1;min-width:320px;max-width:420px;padding:8px;overflow:auto;
+    max-height:800px;
   }
   .layers h2{margin:6px 0 12px 10px;color:var(--cream);}
   .layer{
@@ -79,25 +78,26 @@
   .layer-title{font-weight:700;color:var(--cream)}
   .toggle-btn{
     background:transparent;border:1px solid rgba(255,255,255,0.03);padding:6px 10px;border-radius:8px;color:var(--cream);cursor:pointer;
+    font-size:14px;
   }
   .options{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;}
   .opt{
-    width:64px;height:64px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;
+    width:56px;height:56px;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;
     border:2px solid rgba(0,0,0,0.3);cursor:pointer;position:relative;
   }
   .opt img{max-width:100%;max-height:100%;object-fit:cover;display:block;}
   .opt .label {
-    position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.38);color:white;font-size:11px;padding:2px;border-radius:4px;text-align:center;
+    position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.38);color:white;font-size:10px;padding:2px;border-radius:4px;text-align:center;
   }
   .swatch{
-    width:48px;height:48px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
+    width:40px;height:40px;border-radius:6px;border:1px solid rgba(0,0,0,0.2);
   }
   .opt.selected{outline:3px solid var(--accent);box-shadow: 0 4px 12px rgba(211,155,125,0.18);}
   .opt.hidden{display:none;}
 
   /* Text/draw tool */
   .toolbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0;}
-  .size-indicator{width:36px;height:36px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700}
+  .size-indicator{width:32px;height:32px;border-radius:50%;background:#111;border:2px solid #222;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;}
 
   /* small note */
   .note{position:fixed;right:14px;bottom:10px;font-size:12px;color:rgba(255,255,255,0.55);opacity:0.9}
@@ -109,7 +109,8 @@
   @media (max-width:1100px){
     .app{flex-direction:column;align-items:center;}
     .preview{width:100%}
-    .layers{width:100%}
+    .layers{width:100%;max-height:none;}
+    .canvas-wrap{width:100%;height:auto;aspect-ratio:1/1;}
   }
 
 </style>
@@ -128,11 +129,10 @@
 
     <div class="canvas-wrap">
       <!-- Visible composite canvas -->
-      <canvas id="composite" width="288" height="288" aria-label="プレビュー"></canvas>
+      <canvas id="composite" width="526" height="526" aria-label="プレビュー"></canvas>
 
-      <!-- drawing canvas (topmost) - same size but absolute overlay (we keep it in JS as offscreen + visible) -->
-      <!-- We'll use an overlay element for pointer cursor and events: -->
-      <canvas id="drawLayer" width="288" height="288" style="position:absolute;left:calc(50% - 144px);top:calc(50% - 144px);width:288px;height:288px;border-radius:8px;pointer-events:auto;"></canvas>
+      <!-- drawing canvas (topmost) - same size but absolute overlay -->
+      <canvas id="drawLayer" width="526" height="526" style="position:absolute;left:calc(50% - 263px);top:calc(50% - 263px);width:526px;height:526px;border-radius:8px;pointer-events:auto;"></canvas>
     </div>
 
     <div class="controls">
@@ -167,23 +167,14 @@
   - 各レイヤーは同サイズの画像群から選べる
   - 初期はランダムで1つずつ選択
   - レイヤーを切り替えるUI（1つだけ展開）
+  - hidden:true で選択UI非表示、画像は表示される
   - 描画（文字や手書き）用のトップレイヤー（黒、太さ可変）
   - 消しゴムは描画レイヤー上の描いた線のみ消す（下の画像は消さない）
   - 保存ボタンで合成してPNGをダウンロード
   - UIはチョコレート風の色合い
-  - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生（ファイルはルートに置いてください）
-  - hidden フィールドで UI 上のボタンを非表示にしても画像は表示される
+  - ボタンにホバーで ppp.mp3、クリックで pp.mp3 を再生
 */
 
-/* ---------------------------
-   ここでレイヤー定義（コード内でだけ設定）
-   layers 配���の各要素:
-     id: 数値（小さいほど下になる）
-     title: 表示名
-     editable: true/false（falseなら切り替えUIを表示しない）
-     options: [ { label: "文字または色(#xxxx)", url: "https://...", hidden: true/false }, ... ]
-   注意: 画像はすべて同じ縦横比・サイズである前提（例: 288x288）
----------------------------- */
 const layers = [
   // 背景レイヤー（最下層）
   { id: 0, title: "背景", editable: true, options: [
@@ -257,12 +248,14 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/302.png", hidden: false },
       { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/303.png", hidden: false }
     ]},
+
   { id: 3, title: "板チョコ", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/401.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/402.png", hidden: false },
       { label:"ロゴB", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/403.png", hidden: false }
     ]},
-  { id: 5, title: "おもちゃ", editable: true, options: [
+
+  { id: 4, title: "おもちゃ", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/501.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/502.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/503.png", hidden: false },
@@ -270,11 +263,12 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/505.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/506.png", hidden: false }
     ]},
-  // エフェクト
-  { id: 6, title: "", editable: true, options: [
-      { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: true }
+
+  { id: 5, title: "きらめき", editable: true, options: [
+      { label:"きらめき", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/801.png", hidden: false }
     ]},
-  { id: 7, title: "おもちゃ", editable: true, options: [
+
+  { id: 6, title: "おもちゃ2", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/601.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/602.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/603.png", hidden: false },
@@ -284,13 +278,16 @@ const layers = [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/607.png", hidden: false },
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/608.png", hidden: false }
     ]},
-  { id: 8, title: "おもちゃ2", editable: true, options: [
+
+  { id: 7, title: "おもちゃ2", editable: true, options: [
       { label:"ロゴA", url:"https://raw.githubusercontent.com/zzcafe-280/zztyoko/main/901.png", hidden: true }
     ]},
-  
+
   // 最上位（描画は専用レイヤーとして扱いますが、見た目上のレイヤー情報を持たせる）
+  { id: 8, title: "", editable: false, options: [] },
   { id: 9, title: "", editable: false, options: [] }
 ];
+
 /* ---------------------------
    内部状態
 ---------------------------- */
@@ -299,6 +296,7 @@ const state = {
   imagesCache: {}, // url -> HTMLImageElement
   expandOpen: null, // 展開されているレイヤーID（1つだけ）
   canvasSize: 526
+};
 
 /* Elements */
 const layersContainer = document.getElementById('layersContainer');
@@ -349,7 +347,8 @@ function buildLayersUI(){
   layers.sort((a,b)=>a.id-b.id).forEach(layer=>{
     const wrap = document.createElement('div'); wrap.className='layer'; wrap.dataset.layerId = layer.id;
     const header = document.createElement('div'); header.className='layer-header';
-    const title = document.createElement('div'); title.className='layer-title'; title.textContent = `${layer.title}`;
+    const title = document.createElement('div'); title.className='layer-title'; 
+    title.textContent = layer.title;
     header.appendChild(title);
 
     if(layer.editable){
@@ -363,8 +362,7 @@ function buildLayersUI(){
       });
       header.appendChild(toggle);
     } else {
-      const lock = document.createElement('div'); lock.style.opacity=0.7; lock.style.fontSize='13px'; lock.textContent='編集不可';
-      header.appendChild(lock);
+      // 編集不可レイヤーは何も表示しない
     }
 
     wrap.appendChild(header);
@@ -409,8 +407,7 @@ function buildLayersUI(){
         if(opt.url) loadImage(opt.url);
       });
     } else {
-      const hint = document.createElement('div'); hint.style.fontSize='13px'; hint.style.opacity=0.8; hint.textContent = 'このレイヤーは描画専用です';
-      opts.appendChild(hint);
+      // 編集不可レイヤーはオプションを表示しない
     }
 
     wrap.appendChild(opts);
@@ -429,11 +426,11 @@ function randomizeSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
     if(!layer.options || layer.options.length===0) return;
-    // フィルター: hidden でないオプションのみ
-    const visibleOpts = layer.options.filter(o => !o.hidden);
-    if(visibleOpts.length === 0) return;
-    const idx = layer.options.indexOf(visibleOpts[Math.floor(Math.random()*visibleOpts.length)]);
-    state.selected[layer.id] = idx;
+    // 非表示のオプションを除いてランダム選択
+    const visibleOptions = layer.options.map((opt, idx) => ({ opt, idx })).filter(item => !item.opt.hidden);
+    if(visibleOptions.length === 0) return;
+    const randomItem = visibleOptions[Math.floor(Math.random() * visibleOptions.length)];
+    state.selected[layer.id] = randomItem.idx;
   });
 }
 
@@ -441,11 +438,13 @@ function randomizeSelections(){
 function resetSelections(){
   layers.forEach(layer=>{
     if(!layer.editable) return;
-    if(!layer.options || layer.options.length===0) return;
-    // 最初の hidden でないオプションを探す
-    const firstVisibleIdx = layer.options.findIndex(o => !o.hidden);
-    if(firstVisibleIdx >= 0) state.selected[layer.id] = firstVisibleIdx;
-    else state.selected[layer.id] = 0;
+    // 最初の非表示でないオプション、またはあれば最初のオプションを選択
+    const visibleOptions = layer.options.map((opt, idx) => ({ opt, idx })).filter(item => !item.opt.hidden);
+    if(visibleOptions.length > 0) {
+      state.selected[layer.id] = visibleOptions[0].idx;
+    } else {
+      state.selected[layer.id] = 0;
+    }
   });
 }
 
@@ -453,10 +452,10 @@ function resetSelections(){
 async function redrawComposite(){
   const size = state.canvasSize;
   ctx.clearRect(0,0,size,size);
+  // clear composite (transparent background)
   ctx.clearRect(0,0,size,size);
 
   for(const layer of layers){
-    if(layer.id === 8) continue; // drawing handled separately
     if(!layer.editable) continue;
     const sel = state.selected[layer.id];
     if(sel === undefined) continue;
@@ -470,7 +469,6 @@ async function redrawComposite(){
     drawImageCover(ctx, img, 0,0,size,size);
   }
   // finally composite the drawLayer (user drawing) above
-  // we copy pixels from drawCtx (visible canvas) to composite ctx:
   ctx.drawImage(drawLayer, 0,0, size, size);
 }
 
@@ -490,10 +488,9 @@ async function saveComposite(){
   const size = state.canvasSize;
   const tmp = document.createElement('canvas'); tmp.width = size; tmp.height = size;
   const tctx = tmp.getContext('2d');
-  // background (white)
+  // background (transparent)
   tctx.clearRect(0,0,size,size);
   for(const layer of layers){
-    if(layer.id === 8) continue;
     if(!layer.editable) continue;
     const sel = state.selected[layer.id];
     if(sel === undefined) continue;
@@ -515,9 +512,6 @@ async function saveComposite(){
 
 /* ---------------------------
    Drawing (手書き / 消しゴム)
-   We use drawLayer canvas for visible strokes and keep everything there.
-   Eraser should only erase what's drawn (not underlying images) -> using destination-out is enough
-   because we only modify drawLayer.
 ---------------------------- */
 let drawing = false;
 let erasing = false;
@@ -566,7 +560,6 @@ function pointerDown(e){
   last = getPointerPos(e);
   drawCtx.save();
   if(erasing){
-    // eraser: make composite operation that removes pixels from drawLayer only
     drawCtx.globalCompositeOperation = 'destination-out';
     drawCtx.strokeStyle = 'rgba(0,0,0,1)';
   } else {
@@ -589,7 +582,7 @@ function pointerUp(e){
   drawing = false;
   drawCtx.closePath();
   drawCtx.restore();
-  redrawComposite(); // update preview composite
+  redrawComposite();
 }
 drawLayer.addEventListener('mousedown', pointerDown);
 drawLayer.addEventListener('touchstart', pointerDown, {passive:false});
@@ -600,7 +593,6 @@ window.addEventListener('touchend', pointerUp);
 
 /* initialization */
 async function init(){
-  // ensure drawLayer is cleared and background white for preview if desired
   drawLayer.style.pointerEvents='auto';
   // random initial selections
   randomizeSelections();
